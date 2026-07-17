@@ -1,0 +1,35 @@
+{
+  "name": "@equibets/competition-data",
+  "version": "0.1.0",
+  "description": "Portable competition-data ingestion and reconciliation package for EquiBets.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "REPLIT_HANDOFF.md",
+    ".env.example",
+    "docs",
+    "examples",
+    "migrations"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": [
+    "equibets",
+    "equestrian",
+    "competition-data",
+    "ingestion",
+    "reconciliation"
+  ],
+  "license": "UNLICENSED",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}
