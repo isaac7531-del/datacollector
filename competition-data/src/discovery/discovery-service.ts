@@ -42,7 +42,11 @@ export class DiscoveryService {
           continue;
         }
 
-        throw error;
+        this.logger.error("Competition discovery failed for connector", {
+          connectorId: connector.descriptor.id,
+          error: error instanceof Error ? error.message : "Unknown error"
+        });
+        continue;
       }
     }
 

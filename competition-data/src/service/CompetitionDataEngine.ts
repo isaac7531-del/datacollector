@@ -5,6 +5,7 @@ import type { CompetitionDataConnector, DiscoveryContext } from "../connectors/t
 import { ConnectorRegistry } from "../connectors/registry";
 import type { ConnectorDescriptor } from "../connectors/types";
 import type { IngestionRunSummary, ManualEntrySubmission } from "../domain/types";
+import type { EventPublisher } from "../events/events";
 import { IngestionEngine, type IngestionRunOptions } from "../ingestion/ingestionEngine";
 import { ManualEntryService, type ManualEntryResult } from "../manual-entry/manualEntryService";
 import type { CompetitionDataNormalizer } from "../normalisation/normalizer";
@@ -17,6 +18,7 @@ export interface CompetitionDataEngineOptions {
   normalizers?: CompetitionDataNormalizer[];
   logger?: Logger;
   importBatchPrefix?: string;
+  eventPublisher?: EventPublisher;
 }
 
 export class CompetitionDataEngine {
@@ -44,7 +46,8 @@ export class CompetitionDataEngine {
       normalizers: this.normalizers,
       repository: options.repository,
       logger: this.logger,
-      importBatchPrefix: options.importBatchPrefix
+      importBatchPrefix: options.importBatchPrefix,
+      eventPublisher: options.eventPublisher
     });
     this.manualEntry = new ManualEntryService(options.repository);
   }
@@ -63,12 +66,50 @@ export class CompetitionDataEngine {
     return this.connectors.list(options).map((connector) => connector.descriptor);
   }
 
+  getConnector(connectorId: string): ConnectorDescriptor | undefined {
+    return this.connectors.get(connectorId)?.descriptor;
+  }
+
+  setConnectorStatus(connectorId: string, enabled: boolean): ConnectorDescriptor {
+    const connector = this.connectors.require(connectorId);
+    connector.descriptor.status = enabled ? "enabled" : "disabled";
+    return connector.descriptor;
+  }
+
+  async connectorHealth(connectorId: string) {
+    const connector = this.connectors.require(connectorId);
+    if (connector.healthCheck) {
+      return connector.healthCheck();
+    }
+
+    return {
+      connectorId,
+      status: connector.descriptor.status === "enabled" ? "healthy" : "disabled",
+      checkedAt: new Date().toISOString(),
+      consecutiveFailures: 0,
+      message: "Connector does not expose a custom health check."
+    };
+  }
+
   async discover(context: DiscoveryContext = {}, connectorIds?: string[]) {
     return this.ingestion.discover(context, connectorIds);
   }
 
   async runIngestion(options: IngestionRunOptions = {}): Promise<IngestionRunSummary> {
     return this.ingestion.run(options);
+  }
+
+  async runConnector(connectorId: string, options: Omit<IngestionRunOptions, "connectorIds"> = {}): Promise<IngestionRunSummary> {
+    return this.ingestion.run({ ...options, connectorIds: [connectorId], triggerType: options.triggerType ?? "manual" });
+  }
+
+  async runBackfill(connectorId: string, fromDate: string, toDate: string, options: Omit<IngestionRunOptions, "connectorIds" | "discovery"> = {}) {
+    return this.ingestion.run({
+      ...options,
+      connectorIds: [connectorId],
+      triggerType: "backfill",
+      discovery: { fromDate, toDate }
+    });
   }
 
   async submitManualEntry(submission: ManualEntrySubmission, options: { dryRun?: boolean } = {}): Promise<ManualEntryResult> {

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "source": {
+    "id": "synthetic-json-provider",
+    "name": "Synthetic JSON Provider",
+    "kind": "event_organiser",
+    "mode": "official_export",
+    "countryCode": "AU",
+    "official": true,
+    "sourceUrl": "https://example.invalid/results.json"
+  },
+  "competitions": [
+    {
+      "externalIds": [{ "sourceSystem": "synthetic-json-provider", "sourceId": "event-2026-1" }],
+      "name": "Synthetic JSON Horse Trials",
+      "status": "completed",
+      "discipline": "eventing",
+      "startDate": "2026-05-01",
+      "endDate": "2026-05-02",
+      "countryCode": "AU",
+      "venue": "JSON Park",
+      "classes": [{ "id": "class-1", "name": "CCN1*-S", "discipline": "eventing" }],
+      "horses": [{ "id": "horse-json-1", "name": "JSON Star", "feiId": "FEIH1" }],
+      "riders": [{ "id": "rider-json-1", "displayName": "JSON Rider", "feiId": "FEIR1" }],
+      "results": [
+        {
+          "id": "result-json-1",
+          "horseName": "JSON Star",
+          "riderName": "JSON Rider",
+          "finalScore": 30.5,
+          "finalPlacing": 1,
+          "status": "placed",
+          "publicationStatus": "final"
+        }
+      ]
+    }
+  ]
+}

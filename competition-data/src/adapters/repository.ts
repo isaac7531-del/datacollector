@@ -10,6 +10,16 @@ import type {
   Rider,
   SourceIdentifier
 } from "../domain/types";
+import type {
+  ConflictRecord,
+  ConnectorHealth,
+  ImportRun,
+  ResolutionCandidate,
+  ResultVersion,
+  SchedulerLock,
+  StagedRecord
+} from "../domain/records";
+import type { CompetitionDataEvent } from "../events/events";
 import { compactIdentifier, dateOnly, normaliseSearchText } from "../domain/normaliseText";
 
 export interface CandidateSearch<TEntity> {
@@ -36,6 +46,30 @@ export interface CompetitionDataRepository {
   findEntryCandidates(search: CandidateSearch<EntryListItem>): Promise<Array<EntityCandidate<EntryListItem>>>;
   findRankingCandidates(search: CandidateSearch<RankingRecord>): Promise<Array<EntityCandidate<RankingRecord>>>;
   applyReconciliationPlan(plan: ReconciliationPlan): Promise<ReconciliationApplyResult>;
+  saveImportRun?(run: ImportRun): Promise<void>;
+  updateImportRun?(run: ImportRun): Promise<void>;
+  listImportRuns?(): Promise<ImportRun[]>;
+  getImportRun?(id: string): Promise<ImportRun | undefined>;
+  saveStagedRecord?(record: StagedRecord): Promise<void>;
+  updateStagedRecord?(record: StagedRecord): Promise<void>;
+  listStagedRecords?(filter?: { importRunId?: string; processingState?: string; matchState?: string }): Promise<StagedRecord[]>;
+  getStagedRecord?(id: string): Promise<StagedRecord | undefined>;
+  saveConflict?(conflict: ConflictRecord): Promise<void>;
+  updateConflict?(conflict: ConflictRecord): Promise<void>;
+  listConflicts?(filter?: { status?: string }): Promise<ConflictRecord[]>;
+  getConflict?(id: string): Promise<ConflictRecord | undefined>;
+  saveResolutionCandidate?(candidate: ResolutionCandidate): Promise<void>;
+  updateResolutionCandidate?(candidate: ResolutionCandidate): Promise<void>;
+  listResolutionCandidates?(filter?: { status?: string }): Promise<ResolutionCandidate[]>;
+  getResolutionCandidate?(id: string): Promise<ResolutionCandidate | undefined>;
+  saveResultVersion?(version: ResultVersion): Promise<void>;
+  listResultVersions?(resultId: string): Promise<ResultVersion[]>;
+  saveConnectorHealth?(health: ConnectorHealth): Promise<void>;
+  getConnectorHealth?(connectorId: string): Promise<ConnectorHealth | undefined>;
+  acquireSchedulerLock?(lock: SchedulerLock): Promise<boolean>;
+  releaseSchedulerLock?(lockId: string): Promise<void>;
+  appendEvent?(event: CompetitionDataEvent): Promise<void>;
+  listEvents?(): Promise<CompetitionDataEvent[]>;
 }
 
 export class InMemoryCompetitionDataRepository implements CompetitionDataRepository {
@@ -46,6 +80,14 @@ export class InMemoryCompetitionDataRepository implements CompetitionDataReposit
   readonly results: CompetitionResult[] = [];
   readonly entries: EntryListItem[] = [];
   readonly rankings: RankingRecord[] = [];
+  readonly importRuns: ImportRun[] = [];
+  readonly stagedRecords: StagedRecord[] = [];
+  readonly conflicts: ConflictRecord[] = [];
+  readonly resolutionCandidates: ResolutionCandidate[] = [];
+  readonly resultVersions: ResultVersion[] = [];
+  readonly connectorHealth: ConnectorHealth[] = [];
+  readonly schedulerLocks: SchedulerLock[] = [];
+  readonly outboxEvents: CompetitionDataEvent[] = [];
 
   constructor(seed: Partial<Pick<InMemoryCompetitionDataRepository, "competitions" | "events" | "horses" | "riders" | "results" | "entries" | "rankings">> = {}) {
     this.competitions.push(...(seed.competitions ?? []));
@@ -125,6 +167,122 @@ export class InMemoryCompetitionDataRepository implements CompetitionDataReposit
     for (const resolution of plan.rankings) applyOne(this.rankings, resolution, result);
 
     return result;
+  }
+
+  async saveImportRun(run: ImportRun): Promise<void> {
+    upsertById(this.importRuns, run);
+  }
+
+  async updateImportRun(run: ImportRun): Promise<void> {
+    upsertById(this.importRuns, run);
+  }
+
+  async listImportRuns(): Promise<ImportRun[]> {
+    return [...this.importRuns];
+  }
+
+  async getImportRun(id: string): Promise<ImportRun | undefined> {
+    return this.importRuns.find((run) => run.id === id);
+  }
+
+  async saveStagedRecord(record: StagedRecord): Promise<void> {
+    upsertById(this.stagedRecords, record);
+  }
+
+  async updateStagedRecord(record: StagedRecord): Promise<void> {
+    upsertById(this.stagedRecords, record);
+  }
+
+  async listStagedRecords(filter: { importRunId?: string; processingState?: string; matchState?: string } = {}): Promise<StagedRecord[]> {
+    return this.stagedRecords.filter((record) => {
+      if (filter.importRunId && record.importRunId !== filter.importRunId) return false;
+      if (filter.processingState && record.processingState !== filter.processingState) return false;
+      if (filter.matchState && record.matchState !== filter.matchState) return false;
+      return true;
+    });
+  }
+
+  async getStagedRecord(id: string): Promise<StagedRecord | undefined> {
+    return this.stagedRecords.find((record) => record.id === id);
+  }
+
+  async saveConflict(conflict: ConflictRecord): Promise<void> {
+    upsertById(this.conflicts, ensureId(conflict));
+  }
+
+  async updateConflict(conflict: ConflictRecord): Promise<void> {
+    upsertById(this.conflicts, ensureId(conflict));
+  }
+
+  async listConflicts(filter: { status?: string } = {}): Promise<ConflictRecord[]> {
+    return this.conflicts.filter((conflict) => !filter.status || conflict.status === filter.status);
+  }
+
+  async getConflict(id: string): Promise<ConflictRecord | undefined> {
+    return this.conflicts.find((conflict) => conflict.id === id);
+  }
+
+  async saveResolutionCandidate(candidate: ResolutionCandidate): Promise<void> {
+    upsertById(this.resolutionCandidates, ensureId(candidate));
+  }
+
+  async updateResolutionCandidate(candidate: ResolutionCandidate): Promise<void> {
+    upsertById(this.resolutionCandidates, ensureId(candidate));
+  }
+
+  async listResolutionCandidates(filter: { status?: string } = {}): Promise<ResolutionCandidate[]> {
+    return this.resolutionCandidates.filter((candidate) => !filter.status || candidate.status === filter.status);
+  }
+
+  async getResolutionCandidate(id: string): Promise<ResolutionCandidate | undefined> {
+    return this.resolutionCandidates.find((candidate) => candidate.id === id);
+  }
+
+  async saveResultVersion(version: ResultVersion): Promise<void> {
+    upsertById(this.resultVersions, ensureId(version));
+  }
+
+  async listResultVersions(resultId: string): Promise<ResultVersion[]> {
+    return this.resultVersions.filter((version) => version.canonicalResultId === resultId);
+  }
+
+  async saveConnectorHealth(health: ConnectorHealth): Promise<void> {
+    const index = this.connectorHealth.findIndex((existing) => existing.connectorId === health.connectorId);
+    if (index >= 0) {
+      this.connectorHealth[index] = health;
+      return;
+    }
+    this.connectorHealth.push(health);
+  }
+
+  async getConnectorHealth(connectorId: string): Promise<ConnectorHealth | undefined> {
+    return this.connectorHealth.find((health) => health.connectorId === connectorId);
+  }
+
+  async acquireSchedulerLock(lock: SchedulerLock): Promise<boolean> {
+    const now = Date.now();
+    const existing = this.schedulerLocks.find((candidate) => candidate.scope === lock.scope && Date.parse(candidate.expiresAt) > now);
+    if (existing) {
+      return false;
+    }
+
+    this.schedulerLocks.push(lock);
+    return true;
+  }
+
+  async releaseSchedulerLock(lockId: string): Promise<void> {
+    const index = this.schedulerLocks.findIndex((lock) => lock.id === lockId);
+    if (index >= 0) {
+      this.schedulerLocks.splice(index, 1);
+    }
+  }
+
+  async appendEvent(event: CompetitionDataEvent): Promise<void> {
+    this.outboxEvents.push(event);
+  }
+
+  async listEvents(): Promise<CompetitionDataEvent[]> {
+    return [...this.outboxEvents];
   }
 }
 
@@ -219,9 +377,49 @@ function ensureId<TEntity>(entity: TEntity): TEntity {
 }
 
 function mergePreservingId<TEntity>(match: TEntity, incoming: TEntity): TEntity {
+  const matchRecord = match as Record<string, unknown>;
+  const incomingRecord = incoming as Record<string, unknown>;
   return {
-    ...(match as object),
-    ...(incoming as object),
+    ...matchRecord,
+    ...incomingRecord,
+    metadata: mergeMetadata(matchRecord.metadata, incomingRecord.metadata),
     id: readId(match) ?? readId(incoming)
   } as TEntity;
+}
+
+function upsertById<TEntity>(collection: TEntity[], entity: TEntity): void {
+  const id = readId(entity);
+  if (!id) {
+    collection.push(entity);
+    return;
+  }
+
+  const index = collection.findIndex((candidate) => readId(candidate) === id);
+  if (index >= 0) {
+    collection[index] = entity;
+    return;
+  }
+
+  collection.push(entity);
+}
+
+function mergeMetadata(existing: unknown, incoming: unknown): unknown {
+  const existingRecord = existing && typeof existing === "object" ? (existing as Record<string, unknown>) : {};
+  const incomingRecord = incoming && typeof incoming === "object" ? (incoming as Record<string, unknown>) : {};
+  const protectedKeys = [
+    "privateNotes",
+    "attachments",
+    "healthRecords",
+    "treatments",
+    "privateTrainingRecords",
+    "nutritionRecords",
+    "privateOwnerCommunication"
+  ];
+  const merged: Record<string, unknown> = { ...existingRecord, ...incomingRecord };
+  for (const key of protectedKeys) {
+    if (existingRecord[key] !== undefined) {
+      merged[key] = existingRecord[key];
+    }
+  }
+  return merged;
 }
