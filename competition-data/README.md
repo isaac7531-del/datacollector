@@ -18,6 +18,13 @@ The engine collects, normalizes, validates, reconciles, and applies public compe
 npm install @equibets/competition-data
 ```
 
+This package does not require public npm publication. Preferred installation options:
+
+1. Copy `competition-data/` as a workspace package into Replit.
+2. Install from a local archive produced from this package.
+3. Install from this private Git repository.
+4. Move to a private package registry later if needed.
+
 For this repository:
 
 ```bash
@@ -25,6 +32,7 @@ cd competition-data
 npm install
 npm test
 npm run build
+npm run demo
 ```
 
 ## Public API
@@ -66,15 +74,24 @@ const summary = await engine.runIngestion({ dryRun: true });
 
 ## Standalone HTTP service
 
-Use `createCompetitionDataHttpServer` to expose:
+Use `createCompetitionDataApiServer` to expose the production API boundary. A legacy minimal `createCompetitionDataHttpServer` remains exported for backwards compatibility.
 
-- `GET /health`
-- `GET /connectors?enabledOnly=true`
-- `POST /discovery`
-- `POST /ingestion-runs`
-- `POST /manual-submissions`
+See `docs/API.md`.
 
-The HTTP adapter is intentionally small and dependency-free. Replit can mount the engine behind its existing API framework instead if preferred.
+## CLI
+
+```bash
+npm run connector:list
+npm run connector:health
+npm run import:file -- --path ./tests/fixtures/eventing-results.csv --connector generic-csv
+npm run import:url -- --url https://example.org/results.csv --connector public-file
+npm run backfill -- --connector generic-csv --from 2026-01-01 --to 2026-12-31
+npm run reprocess:failed
+npm run reprocess:unresolved
+npm run provisional:recheck
+npm run worker
+npm run demo
+```
 
 ## Package layout
 
@@ -82,19 +99,28 @@ The HTTP adapter is intentionally small and dependency-free. Replit can mount th
 competition-data/
   src/
     adapters/
+    api/
+    auth/
+    cli/
     config/
     connectors/
     discovery/
     domain/
+    events/
+    http/
     ingestion/
     manual-entry/
     normalisation/
     provenance/
     reconciliation/
+    repositories/
     resolution/
     scheduling/
+    security/
     service/
+    storage/
     validation/
+    workers/
   tests/
   migrations/
   examples/
@@ -125,3 +151,28 @@ Replit should provide implementations for:
 - Source-specific `CompetitionDataNormalizer` implementations.
 - Optional scheduler or queue adapter.
 - Optional Data Operations Centre UI for reconciliation plans requiring review.
+
+## Working now
+
+- CSV results import.
+- `.xlsx` results import.
+- Source-neutral JSON import.
+- Source-neutral XML import.
+- Public URL import for safe public HTTP/HTTPS files.
+- Manual import through the same pipeline.
+- FEI assisted import for supplied exports/downloads.
+- Staging, validation, normalization, entity resolution, reconciliation and provenance.
+- In-memory and PostgreSQL repository adapters.
+- Runnable HTTP API, CLI, worker and demo.
+
+## Assisted/manual
+
+- FEI exports and downloads supplied by users or administrators.
+- User-uploaded official result files.
+- Historical, unofficial, club, Pony Club, correction and private-note workflows.
+
+## Not supported
+
+- Direct FEI automation where technical protections block server access.
+- CAPTCHA/DataDome bypassing, proxy rotation, browser fingerprint spoofing or stealth scraping.
+- Legacy `.xls` import without a safe parser.

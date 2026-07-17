@@ -2,27 +2,36 @@
 
 Audit date: 2026-07-17
 
-This document reports the current state of `@equibets/competition-data` before the second implementation pass. It intentionally avoids describing scaffolding as a completed live integration.
+This document reports the current state of `@equibets/competition-data` after the second implementation pass. It intentionally avoids describing generic import capability as a certified live public-source integration.
 
 ## Fully functional connectors
 
-- No real public-source connector has been tested end to end against a live public equestrian source.
-- `createHttpJsonFeedConnector` can discover configured endpoints and fetch JSON/text/CSV payloads using the provided `HttpClient`, but it is a generic feed helper, not a complete competition-results importer by itself.
-- A test-only connector exists inside `tests/ingestionEngine.test.ts` and returns an already-normalized graph.
+- `createCsvResultsConnector` is functional and tested with synthetic eventing CSV data.
+- `createExcelResultsConnector` is functional for `.xlsx` files and tested with generated workbook data.
+- `createJsonResultsConnector` is functional and tested with source-neutral JSON schema version `1.0`.
+- `createXmlResultsConnector` is functional and tested with source-neutral XML.
+- `createPublicFileUrlConnector` implements safe public HTTP/HTTPS file fetching for CSV, JSON, XML and `.xlsx`; SSRF protections are unit-tested. It is not tested against a real public equestrian source.
+- `createManualImportConnector` is functional and routes manual submissions through the same ingestion pipeline.
+- `createFeiAssistedImportConnector` wraps assisted FEI CSV/JSON imports. It is not direct FEI page automation.
+- `createNationalResultsConnector` is functional as a configuration-driven framework using synthetic example mappings. No real national federation source is certified live.
 
 ## Interfaces or placeholders
 
-- `CompetitionDataConnector` is a real interface with `discover` and `collect`, but it does not yet model all desired optional source capabilities.
+- `CompetitionDataConnector` is a real interface with `discover`, `collect`, capability metadata, optional source-specific methods and health checks.
 - `CompetitionDataNormalizer` is a real interface.
 - `createPassThroughGraphNormalizer` only works when the source already emits the package's `NormalizedCompetitionGraph`.
-- Scheduling is represented by `CompetitionDataScheduler` and `InProcessCompetitionDataScheduler`, but there is no persistent lock or production queue integration yet.
-- `migrations/001_competition_data_engine.sql` is a reference schema only and is not wired to a repository implementation.
+- Scheduling is represented by `CompetitionDataScheduler`, `InProcessCompetitionDataScheduler` and `SchedulerLockService`.
+- `migrations/002_postgres_engine_storage.sql` is wired to `PostgresCompetitionDataRepository`.
 
 ## Import formats currently working
 
-- Already-normalized JSON-shaped graph objects work through the pass-through normalizer.
-- Generic endpoint fetch supports JSON, CSV text and plain text as raw payloads, but there are no CSV, Excel, JSON-schema, or XML source-neutral import normalizers yet.
-- No direct FEI, national federation, Excel, XML, or public URL safety pipeline is fully implemented yet.
+- Already-normalized graph objects work through the pass-through normalizer.
+- CSV works with configurable delimiter, aliases, mapping, decimal format, event metadata and row-level validation.
+- `.xlsx` works with sheet/header options through `exceljs`.
+- JSON works through documented source-neutral schema version `1.0`.
+- XML works through source-neutral XML mapped to schema version `1.0`.
+- Public URL imports work for safe public HTTP/HTTPS file URLs with SSRF protection, redirect limits, content limits, retries and caching.
+- Legacy `.xls` is not implemented.
 
 ## Repository methods implemented
 
@@ -35,62 +44,57 @@ This document reports the current state of `@equibets/competition-data` before t
   - entry candidate lookup;
   - ranking candidate lookup;
   - reconciliation plan application into in-memory arrays.
-- The repository does not currently persist import runs, staged records, conflicts, versions, provenance records, connector health, scheduler locks, or event outbox records.
+- Optional repository methods now cover import runs, staged records, conflicts, resolution candidates, result versions, connector health, scheduler locks and event outbox records.
 
 ## In-memory-only areas
 
-- All candidate lookup and canonical record application in tests/examples use `InMemoryCompetitionDataRepository`.
-- No production database adapter is currently available.
-- No transaction support exists yet.
+- `InMemoryCompetitionDataRepository` is still used for most tests and the demo.
+- It supports staging, conflicts, resolution candidates, result versions, connector health, locks and outbox events for tests/demos.
 
 ## Persistent storage
 
-- Persistent storage is not implemented.
-- The SQL migration is a reference starting point and does not yet cover the full requested model.
+- `PostgresCompetitionDataRepository` is implemented using `pg`.
+- Migration `002_postgres_engine_storage.sql` creates additive PostgreSQL tables and indexes.
+- PostgreSQL tests require `DATABASE_URL`; without it, the test suite documents that setup requirement.
 
 ## HTTP server
 
-- A runnable Node `http` server factory exists in `src/adapters/httpServer.ts`.
-- Existing endpoints:
-  - `GET /health`
-  - `GET /connectors`
-  - `POST /discovery`
-  - `POST /ingestion-runs`
-  - `POST /manual-submissions`
-- Missing endpoints include readiness, connector health/run/backfill/enable/disable, imports, staged records, resolution candidates, conflicts, canonical data access, result provenance, and result versions.
-- Existing HTTP request validation, pagination, rate limiting, correlation IDs, structured logging, file-size limits, role authorization, and upload handling are minimal or absent.
+- `src/http/server.ts` exposes a runnable API with health/readiness, connector, import, staging, resolution, conflict, manual-result and data-access route boundaries.
+- Request validation is implemented for key mutation endpoints with `zod`.
+- Correlation IDs, JSON body limits, basic rate limiting and auth/role adapter boundaries are implemented.
+- Multipart upload handling is not built in; Replit should connect existing upload middleware to `/imports/file`.
 
 ## CLI, worker and scheduled jobs
 
-- No runnable CLI exists yet.
-- No worker entrypoint exists yet.
-- Scheduling has an in-process interval scheduler only; it has no persistent lock or retry queue.
+- CLI commands exist through npm scripts.
+- Worker entrypoint exists.
+- Scheduler locks exist through repository methods.
+- Retry/reprocess commands exist as boundaries; repository-specific retry queue semantics still need Replit integration for production.
 
 ## Real public source testing
 
-- No real FEI, national federation, event organiser, ranking provider, or public event file has been tested end to end.
-- Direct FEI page automation is not implemented and must remain disabled where automated access is blocked.
+- No real FEI, national federation, event organiser, ranking provider, or public event file has been certified live end to end.
+- Direct FEI page automation remains disabled and unsupported where automated access is blocked.
 
 ## Existing tests
 
-- `tests/entityResolver.test.ts`
-  - verifies source identifier matching updates a record;
-  - verifies low-confidence competition candidates create a new record.
-- `tests/ingestionEngine.test.ts`
-  - verifies a dry-run ingestion from a synthetic already-normalized connector.
+- Entity resolver tests.
+- Ingestion engine synthetic graph test.
+- Import connector tests for CSV, `.xlsx`, JSON and XML.
+- SSRF/security and reconciliation utility tests.
+- HTTP API tests.
+- End-to-end synthetic workflow test.
+- PostgreSQL health-check test gated by `DATABASE_URL`.
+- Package export test.
 
 ## What remains before Replit use
 
 Before the package can be used as a Replit production service, it needs:
 
-- working CSV, Excel, JSON-schema, XML, public-file URL, and manual import connectors;
-- source-neutral staging records and replay/reprocess support;
-- persistent PostgreSQL repository implementation with transactions;
-- connector capability metadata and health tracking;
-- source authority, duplicate detection, conflict creation/resolution, version history, and field-level provenance;
-- expanded HTTP API with request validation, correlation IDs, rate limiting, and auth/role adapter boundaries;
-- CLI and worker entrypoints;
-- scheduler locks and retry/reprocess flows;
-- comprehensive synthetic fixtures and end-to-end demo;
-- Replit export directory and validated ZIP archive;
-- updated handoff/integration documentation that separates fully working, assisted, manual, and unsupported workflows.
+- Replit-specific ORM adaptation or direct use of the PostgreSQL adapter.
+- Replit auth/role adapter.
+- Data Operations Centre and Resolution Centre UI integration.
+- Import History and Undo Imports production semantics.
+- Real public-source certification per connector.
+- Tenant isolation enforcement in the host application.
+- Multipart upload middleware connection.
