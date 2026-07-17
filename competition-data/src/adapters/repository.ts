@@ -172,21 +172,22 @@ function sourceIdentifierKey(identifier: SourceIdentifier): string {
   return `${compactIdentifier(identifier.sourceSystem)}:${compactIdentifier(identifier.sourceId)}`;
 }
 
-function applyOne<TEntity extends { id?: string }>(
+function applyOne<TEntity>(
   collection: TEntity[],
   resolution: { action: string; incoming: TEntity; match?: TEntity },
   result: ReconciliationApplyResult
 ): void {
   if (resolution.action === "create") {
-    collection.push({ ...resolution.incoming, id: resolution.incoming.id ?? cryptoSafeId() });
+    collection.push(ensureId(resolution.incoming));
     result.created += 1;
     return;
   }
 
   if (resolution.action === "update" && resolution.match) {
-    const index = collection.findIndex((entity) => entity === resolution.match || (!!entity.id && entity.id === resolution.match?.id));
+    const matchId = readId(resolution.match);
+    const index = collection.findIndex((entity) => entity === resolution.match || (!!matchId && readId(entity) === matchId));
     if (index >= 0) {
-      collection[index] = { ...resolution.match, ...resolution.incoming, id: resolution.match.id ?? resolution.incoming.id };
+      collection[index] = mergePreservingId(resolution.match, resolution.incoming);
     }
     result.updated += 1;
     return;
@@ -202,4 +203,25 @@ function applyOne<TEntity extends { id?: string }>(
 
 function cryptoSafeId(): string {
   return `mem_${Math.random().toString(36).slice(2, 12)}`;
+}
+
+function readId(entity: unknown): string | undefined {
+  const id = (entity as { id?: unknown }).id;
+  return typeof id === "string" ? id : undefined;
+}
+
+function ensureId<TEntity>(entity: TEntity): TEntity {
+  if (readId(entity)) {
+    return entity;
+  }
+
+  return { ...(entity as object), id: cryptoSafeId() } as TEntity;
+}
+
+function mergePreservingId<TEntity>(match: TEntity, incoming: TEntity): TEntity {
+  return {
+    ...(match as object),
+    ...(incoming as object),
+    id: readId(match) ?? readId(incoming)
+  } as TEntity;
 }
