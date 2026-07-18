@@ -40,6 +40,7 @@ const requirements = engine.calculateRequirements({
 - Produces explainable recommendations with evidence, confidence, cost impact, nutritional impact, and availability.
 - Filters and ranks recommendations by country, region, postal code, import availability, and distributor coverage.
 - Emits events for product, formulation, availability, discontinuation, and recommendation changes.
+- Operates live public manufacturer connectors for the launch cohort with source reconnaissance, robots checks, immutable product versions, availability evidence, document extraction, and operational worker checkpoints.
 
 ## Commands
 
@@ -50,7 +51,11 @@ npm run cli -- connector:list
 npm run cli -- products --country AU
 npm run start
 npm run worker
-npm run export:zip
+npm run manufacturer:list
+npm run manufacturer:discover -- --manufacturer mitavite-au
+npm run manufacturer:collect -- --manufacturer dengie-gb --dry-run
+npm run worker:products
+npm run smoke:live
 ```
 
 ## Package layout
@@ -65,8 +70,13 @@ npm run export:zip
 - `src/costs` - cost per kg/day/month/nutrient.
 - `src/comparison` - product comparison tables.
 - `src/http`, `src/cli`, `src/workers` - runtime adapters.
+- `src/operations`, `src/versioning`, `src/identity`, `src/documents` - Phase 2 live-data operations, product identity, immutable versions, and document ingestion.
 - `migrations` - Postgres schema.
 - `export` - generated Replit handoff package and ZIP.
+
+## Phase 2 live-data status
+
+The package now includes operational source configs for Mitavite, Dengie, Dodson & Horrell, St. Hippolyt, Dunstan, and Triple Crown. These connectors are live-source capable, but the final Phase 2 export must not be regenerated until the real-product acceptance targets and clean export validation have been run. See `docs/REAL_SOURCE_VALIDATION.md`.
 
 ## Compliance boundaries
 
