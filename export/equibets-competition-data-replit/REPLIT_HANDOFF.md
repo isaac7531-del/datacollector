@@ -152,6 +152,10 @@ See `docs/API.md`.
 
 See `docs/CONNECTORS.md`.
 
+## FEI/data.fei.org security audit
+
+See `docs/FEI_AUTOMATION_SECURITY_AUDIT.md` for the approved FEI automation paths, prohibited circumvention workflows and recommended authorised Web Services / assisted-file approach.
+
 ## Database adapter integration
 
 Use `createPostgresRepositories` or implement `CompetitionDataRepository` with the existing Replit ORM. Keep SQL/ORM logic outside domain services.

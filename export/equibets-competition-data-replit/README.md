@@ -78,6 +78,8 @@ Use `createCompetitionDataApiServer` to expose the production API boundary. A le
 
 See `docs/API.md`.
 
+For FEI/data.fei.org collection security review, see `docs/FEI_AUTOMATION_SECURITY_AUDIT.md`.
+
 ## CLI
 
 ```bash
