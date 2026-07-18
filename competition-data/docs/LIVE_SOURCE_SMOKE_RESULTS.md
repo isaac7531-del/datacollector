@@ -38,11 +38,11 @@ npm run source:smoke -- --source british-eventing
 
 Result:
 
-- Discovered events: 1
-- Payloads: 1
-- Normalized graphs: 2
-- Reconciliation plans: 2
-- Created in dry-run: 699
+- Discovered events: 2 from `/latest-results`
+- Payloads: 2
+- Normalized graphs: 6
+- Reconciliation plans: 6
+- Created in dry-run: 108
 - Issues: none
 
 Interpretation:

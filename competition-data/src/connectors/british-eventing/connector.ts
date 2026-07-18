@@ -1,12 +1,13 @@
 import type { CollectionContext, CompetitionDataConnector, ConnectorDescriptor, DiscoveryContext } from "../types";
 import { DisabledConnectorError } from "../types";
 import type { DataSource, DiscoveryItem, RawCompetitionPayload } from "../../domain/types";
-import { normalizeBritishEventing, parseBritishEventingEventPage, parseBritishEventingTablePayload } from "./parser";
+import { normalizeBritishEventing, parseBritishEventingEventLinks, parseBritishEventingEventPage, parseBritishEventingTablePayload } from "./parser";
 
 export interface BritishEventingConnectorOptions {
   id?: string;
   enabled: boolean;
   eventUrls: string[];
+  discoveryUrls?: string[];
   userAgent?: string;
 }
 
@@ -50,7 +51,11 @@ export function createBritishEventingConnector(options: BritishEventingConnector
     descriptor,
     async discover(context: DiscoveryContext): Promise<DiscoveryItem[]> {
       if (descriptor.status === "disabled") throw new DisabledConnectorError(connectorId);
-      const urls = context.sourceIds?.length ? context.sourceIds : options.eventUrls;
+      const urls = context.sourceIds?.length
+        ? context.sourceIds
+        : options.discoveryUrls?.length
+          ? await discoverEventUrls(options.discoveryUrls, options.userAgent, Number(context.metadata?.maxEvents ?? 25))
+          : options.eventUrls;
       const items: DiscoveryItem[] = [];
       for (const url of urls) {
         const html = await fetchText(url, options.userAgent);
@@ -136,4 +141,13 @@ async function fetchText(url: string, userAgent?: string, headers: Record<string
   });
   if (!response.ok) throw new Error(`British Eventing fetch failed for ${url}: ${response.status}`);
   return response.text();
+}
+
+async function discoverEventUrls(discoveryUrls: string[], userAgent: string | undefined, maxEvents: number): Promise<string[]> {
+  const urls: string[] = [];
+  for (const discoveryUrl of discoveryUrls) {
+    const html = await fetchText(discoveryUrl, userAgent);
+    urls.push(...parseBritishEventingEventLinks(html, discoveryUrl).filter((event) => event.status === "results_available").map((event) => event.eventUrl));
+  }
+  return Array.from(new Set(urls)).slice(0, maxEvents);
 }

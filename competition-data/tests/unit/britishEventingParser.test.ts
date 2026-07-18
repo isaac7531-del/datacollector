@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseBritishEventingEventPage, parseBritishEventingTablePayload } from "../../src";
+import { parseBritishEventingEventLinks, parseBritishEventingEventPage, parseBritishEventingTablePayload } from "../../src";
 
 describe("British Eventing parser", () => {
   it("extracts event chunks from result page HTML", () => {
@@ -12,7 +12,34 @@ describe("British Eventing parser", () => {
     `;
     const event = parseBritishEventingEventPage(html, "https://www.britisheventing.com/results/event/TEST~123");
     expect(event.id).toBe("british-eventing:123");
+    expect(event.startDate).toBe("2026-05-05");
+    expect(event.endDate).toBe("2026-05-06");
+    expect(event.venue).toContain("Test Venue");
     expect(event.classes[0]?.loaderUrl).toContain("/results-table-loader/event1/class1/event_results_full");
+  });
+
+  it("discovers result URLs from latest-results table rows", () => {
+    const html = `<tr data-start="1772150400" data-title="MONTELIBRETTI" data-location="-" data-classes="CCI-S 1*, CCI-S 4*">
+      <td><a href="/compete/fixtures-and-results/MONTELIBRETTI~20098993">MONTELIBRETTI</a></td>
+      <td>27 Feb - 2 Mar 26</td>
+      <td>-</td>
+      <td>CCI-S 1*, CCI-S 4*</td>
+      <td><div class='event-status-icon status-results-available' title='Results Available'><a href="/results/event/MONTELIBRETTI~20098993">R</a></div></td>
+    </tr>`;
+    const links = parseBritishEventingEventLinks(html, "https://www.britisheventing.com/latest-results");
+    expect(links[0]?.eventId).toBe("20098993");
+    expect(links[0]?.status).toBe("results_available");
+    expect(links[0]?.classes).toEqual(["CCI-S 1*", "CCI-S 4*"]);
+  });
+
+  it("parses cross-month abbreviated British Eventing dates", () => {
+    const html = `
+      <meta property="og:title" content="Results: MONTELIBRETTI" />
+      Name: MONTELIBRETTI Date: 27 Feb - 2 Mar 26 Location: MONTELIBRETTI Class:
+    `;
+    const event = parseBritishEventingEventPage(html, "https://www.britisheventing.com/results/event/MONTELIBRETTI~20098993");
+    expect(event.startDate).toBe("2026-02-27");
+    expect(event.endDate).toBe("2026-03-02");
   });
 
   it("parses AJAX table payload rows", () => {

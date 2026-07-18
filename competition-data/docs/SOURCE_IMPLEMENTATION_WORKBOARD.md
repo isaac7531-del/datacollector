@@ -16,10 +16,10 @@ Status values are intentionally conservative. A smoke test does not imply produc
 | rechenstelle | Acceptance | unsupported |  | Needs five events/two years | Expand live tests |
 | british-eventing | Registration | supported | Registry + connector |  |  |
 | british-eventing | Reconnaissance | supported | Source assessment |  |  |
-| british-eventing | Discovery | partially_supported | Known result URLs | Calendar discovery incomplete | Event search/calendar |
+| british-eventing | Discovery | partially_supported | `/latest-results` discovery works with real event URLs | Broader calendar/date-range discovery incomplete | Event search/calendar backfill |
 | british-eventing | Classes | supported | Results table loader chunks |  | More formats |
 | british-eventing | Phase results | supported | Live smoke table chunks |  | More events/levels |
-| british-eventing | Final results | supported | Live smoke |  | Acceptance suite |
+| british-eventing | Final results | supported | Live smoke: 2 latest events, 6 graphs, 0 issues | Needs 25-event acceptance | Acceptance suite |
 | british-eventing | Historical backfill | partially_supported | Historical links | No broad crawler | Controlled backfill |
 | british-eventing | Acceptance | unsupported |  | Needs five events/two years | Expand coverage |
 | fei | Registration | supported | Registry + docs |  | Authorised connector |

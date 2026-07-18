@@ -10,8 +10,8 @@ Representative URLs inspected:
 
 ## Findings
 
-- Public entry points: result pages under `/results/event/{slug}~{eventId}`.
-- Event calendar structure: event result pages include prior-year links and canonical event identifiers.
+- Public entry points: `/latest-results`, `/search-events?period=recent`, and result pages under `/results/event/{slug}~{eventId}`.
+- Event calendar structure: `/latest-results` lists result-available events; `/search-events?period=recent` lists current/recent fixtures; event result pages include prior-year links and canonical event identifiers.
 - Historical event navigation: pages include historical links for the same event name.
 - Event identifiers: numeric suffix after `~`, e.g. `20098881`; internal `data-entity_id` values such as `a1PN...`.
 - Class identifiers: public select options and result chunks expose `data-chunk_id` values such as `a1rN...`.
@@ -51,6 +51,12 @@ Representative URLs inspected:
 
 ## Known limitations
 
-- Initial reconnaissance did not identify a public calendar API.
+- No separate public calendar API is required for latest result discovery; broader calendar/backfill discovery still needs implementation beyond `/latest-results`.
 - Horse/rider persistent IDs were not visible in the sampled result table payload.
 - Some pages may include Cloudflare content links; connector must stop on challenges and not bypass.
+
+## Latest implementation evidence
+
+- `npm run source:discover -- --source british-eventing --limit 2` discovered real result events from `/latest-results`.
+- `npm run source:smoke -- --source british-eventing --limit 2` collected 2 real events, 6 result graphs and produced no issues.
+- Production readiness remains false until all acceptance criteria are met.

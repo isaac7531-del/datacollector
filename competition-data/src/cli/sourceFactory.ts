@@ -26,6 +26,7 @@ export function createSourceEngine() {
       }),
       createBritishEventingConnector({
         enabled: true,
+        discoveryUrls: ["https://www.britisheventing.com/latest-results"],
         eventUrls: [
           "https://www.britisheventing.com/results/event/THE-GRASSROOTS-CHAMPIONSHIPS~20098881"
         ]

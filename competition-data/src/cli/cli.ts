@@ -158,7 +158,7 @@ program.command("source:assess").requiredOption("--source <source>", "Source id"
   }, null, 2));
 });
 
-program.command("source:discover").requiredOption("--source <source>", "Source id").option("--url <url>", "Specific source URL").description("Discover events from a live source").action(async (options) => {
+program.command("source:discover").requiredOption("--source <source>", "Source id").option("--url <url>", "Specific source URL").option("--limit <limit>", "Maximum events to discover", "5").description("Discover events from a live source").action(async (options) => {
   const { engine } = createSourceEngine();
   const connectorId = sourceIdFromCli(options.source);
   const source = requireSource(connectorId);
@@ -167,7 +167,7 @@ program.command("source:discover").requiredOption("--source <source>", "Source i
     return;
   }
   try {
-    const items = await engine.discover({ sourceIds: options.url ? [options.url] : undefined }, [connectorId]);
+    const items = await engine.discover({ sourceIds: options.url ? [options.url] : undefined, metadata: { maxEvents: Number(options.limit) } }, [connectorId]);
     console.log(JSON.stringify(items, null, 2));
   } catch (error) {
     printCapabilityError(error);
@@ -193,7 +193,7 @@ program.command("source:collect-event").requiredOption("--source <source>", "Sou
   }
 });
 
-program.command("source:smoke").requiredOption("--source <source>", "Source id").description("Run a small live source smoke test").action(async (options) => {
+program.command("source:smoke").requiredOption("--source <source>", "Source id").option("--limit <limit>", "Maximum events to smoke", "2").description("Run a small live source smoke test").action(async (options) => {
   const { engine } = createSourceEngine();
   const connectorId = sourceIdFromCli(options.source);
   const source = requireSource(connectorId);
@@ -202,7 +202,7 @@ program.command("source:smoke").requiredOption("--source <source>", "Source id")
     return;
   }
   try {
-    const summary = await engine.runConnector(connectorId, { triggerType: "cli", dryRun: true });
+    const summary = await engine.runConnector(connectorId, { triggerType: "cli", dryRun: true, discovery: { metadata: { maxEvents: Number(options.limit) } } });
     console.log(JSON.stringify({ source: connectorId, smoke: "completed", summary }, null, 2));
   } catch (error) {
     printCapabilityError(error);
