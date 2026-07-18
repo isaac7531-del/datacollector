@@ -1,0 +1,21 @@
+# Mitavite Australia Source Reconnaissance
+
+- Manufacturer: Mitavite
+- Countries: Australia
+- Public catalogue entry point: https://mitavite.com/collections/feeds
+- Regional variants: Australian Shopify site; do not assume same formulation for other countries.
+- Product identifiers: product URL slug and product page title.
+- Category structure: feeds collection with visible product cards and category filters.
+- Nutrition data: product pages expose "Nutrition Analysis" tables with as-fed values per 1 kg.
+- Feeding directions: product pages expose feeding guide tables for body weight and workload.
+- Ingredients: ingredient paragraphs are present on product pages for many products.
+- Packaging: visible package labels such as 20 kg or 25 kg.
+- Availability: official AU site indicates Australia-market products; some products include regional notes such as state availability.
+- Documents: primary path is HTML product page; PDFs are not required for launch connector.
+- Structured data: Shopify product URLs and sitemap are expected.
+- Ordinary HTTP viability: collection page fetched successfully during reconnaissance.
+- Anti-bot/authentication: no authentication required for fetched catalogue page.
+- Robots/terms: robots fetch timed out in this environment; connector performs live robots check and refuses disallowed URLs.
+- Expected stability: high for product URL discovery and nutrient table parsing.
+- Connector mode: fully automated public-page connector.
+- Limitations: stockist/retailer coverage is not yet parsed; product claims remain manufacturer-sourced, not independently verified.

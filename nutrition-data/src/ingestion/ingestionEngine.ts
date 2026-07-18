@@ -4,6 +4,8 @@ import type { EventPublisher } from "../events/events";
 import { noopEventPublisher } from "../events/events";
 import type { ConnectorRegistry } from "../connectors/registry";
 import type { DiscoveryContext } from "../connectors/types";
+import { createImmutableProductVersion } from "../versioning/formulationVersioning";
+import type { AvailabilityEvidence } from "../operations/types";
 
 export interface IngestionEngineOptions {
   registry: ConnectorRegistry;
@@ -72,6 +74,7 @@ export class IngestionEngine {
               const action = await this.options.repository.upsertProduct(product);
               if (action === "created") summary.productsCreated += 1;
               else summary.productsUpdated += 1;
+              await this.persistOperationalProductState(product, existing);
               await this.publishProductEvents(product, changedNutrients, availabilityChanged);
             }
           }
@@ -104,6 +107,26 @@ export class IngestionEngine {
     }
     if (availabilityChanged) {
       await this.eventPublisher.publish({ type: "nutrition.country_availability.changed", occurredAt, product });
+    }
+  }
+
+  private async persistOperationalProductState(product: FeedProduct, existing?: FeedProduct): Promise<void> {
+    if (this.options.repository.saveProductVersion) {
+      const previousVersions = (await this.options.repository.listProductVersions?.(product.id)) ?? [];
+      const latest = previousVersions[previousVersions.length - 1];
+      const nextVersion = createImmutableProductVersion(product, latest);
+      if (!latest || latest.sourceChecksum !== nextVersion.sourceChecksum) {
+        await this.options.repository.saveProductVersion(nextVersion);
+      }
+    }
+
+    const evidence = product.metadata?.availabilityEvidence as AvailabilityEvidence[] | undefined;
+    if (evidence?.length && this.options.repository.saveAvailabilityEvidence) {
+      for (const item of evidence) await this.options.repository.saveAvailabilityEvidence(item);
+    }
+
+    if (existing && existing.availability !== product.availability) {
+      await this.options.repository.recordAvailabilityChange?.(product.id, product.availability);
     }
   }
 }

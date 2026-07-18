@@ -26,6 +26,40 @@ async function route(engine: NutritionDataEngine, request: IncomingMessage, resp
     }));
   }
   if (request.method === "GET" && url.pathname === "/manufacturers") return json(response, 200, await engine.listManufacturers());
+  if (request.method === "GET" && url.pathname.startsWith("/manufacturers/") && url.pathname.endsWith("/health")) {
+    const id = url.pathname.split("/")[2];
+    return json(response, 200, await engine.connectorHealth(id));
+  }
+  if (request.method === "POST" && url.pathname.startsWith("/manufacturers/") && url.pathname.endsWith("/refresh")) {
+    const id = url.pathname.split("/")[2];
+    return json(response, 200, await engine.runConnector(id));
+  }
+  if (request.method === "GET" && url.pathname.match(/^\/products\/[^/]+\/versions$/)) {
+    const id = url.pathname.split("/")[2];
+    return json(response, 200, await engine.productVersions(id));
+  }
+  if (request.method === "GET" && url.pathname.match(/^\/products\/[^/]+\/availability$/)) {
+    const id = url.pathname.split("/")[2];
+    return json(response, 200, await engine.availabilityEvidence({ productId: id }));
+  }
+  if (request.method === "GET" && url.pathname.match(/^\/products\/[^/]+\/price-history$/)) {
+    const id = url.pathname.split("/")[2];
+    return json(response, 200, await engine.priceHistory({ productId: id }));
+  }
+  if (request.method === "GET" && url.pathname === "/availability") {
+    return json(response, 200, await engine.availabilityEvidence({
+      country: url.searchParams.get("country") ?? undefined,
+      staleBefore: url.searchParams.get("staleBefore") ?? undefined
+    }));
+  }
+  if (request.method === "GET" && url.pathname === "/availability/distributors") {
+    return json(response, 200, await engine.distributorStockists({
+      country: url.searchParams.get("country") ?? undefined,
+      manufacturerId: url.searchParams.get("manufacturerId") ?? undefined
+    }));
+  }
+  if (request.method === "GET" && url.pathname === "/operations/runs") return json(response, 200, await engine.operationalRuns());
+  if (request.method === "GET" && url.pathname === "/operations/issues") return json(response, 200, await engine.operationalIssues({ unresolvedOnly: url.searchParams.get("unresolvedOnly") === "true" }));
   if (request.method === "POST" && url.pathname === "/requirements") return json(response, 200, engine.calculateRequirements(await body(request)));
   if (request.method === "POST" && url.pathname === "/programs/analyse") return json(response, 200, engine.analyseFeedingProgram(await body(request)));
   if (request.method === "POST" && url.pathname === "/recommendations") return json(response, 200, await engine.recommendForProgram(await body(request)));

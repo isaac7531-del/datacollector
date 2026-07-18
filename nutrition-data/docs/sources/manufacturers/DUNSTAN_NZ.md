@@ -1,0 +1,22 @@
+# Dunstan New Zealand Source Reconnaissance
+
+- Manufacturer: Dunstan
+- Countries: New Zealand
+- Public catalogue entry point: https://www.dunstan.co.nz/
+- Example product pages:
+  - https://www.dunstan.co.nz/product/details/horse-feed/equestrian/dunstan-salute
+  - https://www.dunstan.co.nz/product/details/horse-feed/equestrian/dunstan-competition-mix
+- Product identifiers: product details path and title.
+- Category structure: horse-feed/equestrian product detail pages and public datasheets.
+- Nutrition data: public pages expose typical analysis per kg and nutrient composition tables.
+- Feeding directions: public pages include feeding rates based on a 500 kg horse.
+- Ingredients: partial coverage; some datasheets include richer composition notes.
+- Packaging: product pages and datasheets may include package sizes.
+- Availability: official NZ manufacturer site; products are New Zealand-market products.
+- Documents: public datasheets such as `file/*/open` are document-assisted candidates.
+- Structured data: product details URLs.
+- Robots/terms: live connector performs robots check.
+- Ordinary HTTP viability: product pages visible through public search snippets.
+- Expected stability: medium-high.
+- Connector mode: fully automated public-page connector with document-assisted extension.
+- Limitations: retailer/stockist evidence and price observations are not yet collected.

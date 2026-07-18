@@ -1,0 +1,21 @@
+# Dodson & Horrell UK/Ireland Source Reconnaissance
+
+- Manufacturer: Dodson & Horrell
+- Countries: United Kingdom, Ireland
+- Public catalogue entry points:
+  - https://www.dodsonandhorrell.com/product/high-fibre-nuts
+  - public technical sheets under `/storage/*.pdf`
+- Product identifiers: product URL slug, PDF filename, product title.
+- Category structure: product pages plus public PDF datasheets by feed family.
+- Nutrition data: product pages and PDFs expose profile, macro minerals, micro minerals, vitamins and additives.
+- Feeding directions: product pages and PDFs include feeding guidelines and maximum intake guidance.
+- Ingredients: composition sections are present in PDFs and product pages.
+- Packaging: bag sizes visible on product pages.
+- Availability: official UK manufacturer site; Ireland distribution should be confirmed by distributor evidence before recommendable IE availability.
+- Documents: public PDFs are important for technical products and require embedded text extraction first.
+- Structured data: product URLs and public PDF storage paths.
+- Robots/terms: no login or CAPTCHA encountered in search results; connector remains document-assisted and must respect robots checks.
+- Ordinary HTTP viability: public page/PDF snippets were available from search; live smoke should be run separately.
+- Expected stability: medium-high, dependent on PDF layout stability.
+- Connector mode: document-assisted.
+- Limitations: not all product pages expose full data in HTML; parser confidence depends on document extraction.

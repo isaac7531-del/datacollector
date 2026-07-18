@@ -258,6 +258,7 @@ export interface RequirementProfile {
   requirements: Record<string, NutrientRequirement>;
   assumptions: string[];
   generatedAt: ISODateTimeString;
+  metadata?: Record<string, unknown>;
 }
 
 export interface FeedingProgramItem {

@@ -1,4 +1,5 @@
 import type { HorseProfile, NutrientRequirement, RequirementProfile, Workload } from "../domain/types";
+import { defaultRequirementStandard, requirementStandards } from "./standards";
 
 const WORKLOAD_FACTORS: Record<Workload, number> = {
   maintenance: 1,
@@ -66,7 +67,23 @@ export class HorseRequirementsEngine {
         "Forage analysis should replace default forage assumptions when available.",
         "Pregnancy, lactation, growth, heat, travel, and recovery increase selected requirements."
       ],
-      generatedAt: new Date().toISOString()
+      generatedAt: new Date().toISOString(),
+      metadata: {
+        standard: defaultRequirementStandard(),
+        availableStandards: requirementStandards,
+        calculationPath: [
+          "bodyweight to maintenance digestible energy",
+          "workload multiplier",
+          "life-stage protein and mineral modifiers",
+          "pasture/recovery/climate vitamin E modifiers",
+          "medical-goal starch and sugar cap"
+        ],
+        limitations: [
+          "Does not diagnose or treat disease.",
+          "Uses named software reference rules until jurisdiction-specific standards are configured.",
+          "Forage laboratory analysis should be used where available."
+        ]
+      }
     };
   }
 }

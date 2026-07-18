@@ -10,6 +10,7 @@ import { IngestionEngine, type IngestionRunOptions } from "../ingestion/ingestio
 import { FeedingProgramEngine } from "../programs/feedingProgramEngine";
 import { RecommendationEngine } from "../recommendations/recommendationEngine";
 import { HorseRequirementsEngine } from "../requirements/requirementsEngine";
+import { NutritionSafetyEngine } from "../safety/safetyEngine";
 
 export interface NutritionDataEngineOptions {
   repository: NutritionDataRepository;
@@ -25,6 +26,7 @@ export class NutritionDataEngine {
   readonly recommendations = new RecommendationEngine(this.availability);
   readonly costs = new CostEngine();
   readonly comparisons = new ComparisonEngine(this.availability, this.costs);
+  readonly safety = new NutritionSafetyEngine();
 
   private readonly ingestion: IngestionEngine;
 
@@ -93,6 +95,30 @@ export class NutritionDataEngine {
     return this.options.repository.getProduct(productId);
   }
 
+  async productVersions(productId: string) {
+    return this.options.repository.listProductVersions?.(productId) ?? [];
+  }
+
+  async availabilityEvidence(query: { productId?: string; country?: string; staleBefore?: string } = {}) {
+    return this.options.repository.listAvailabilityEvidence?.(query) ?? [];
+  }
+
+  async distributorStockists(query: { country?: string; manufacturerId?: string } = {}) {
+    return this.options.repository.listDistributorStockists?.(query) ?? [];
+  }
+
+  async priceHistory(query: { productId?: string; country?: string; staleBefore?: string } = {}) {
+    return this.options.repository.listPriceObservations?.(query) ?? [];
+  }
+
+  async operationalIssues(query: Parameters<NonNullable<NutritionDataRepository["listOperationalIssues"]>>[0] = {}) {
+    return this.options.repository.listOperationalIssues?.(query) ?? [];
+  }
+
+  async operationalRuns(query: Parameters<NonNullable<NutritionDataRepository["listOperationalRuns"]>>[0] = {}) {
+    return this.options.repository.listOperationalRuns?.(query) ?? [];
+  }
+
   async localProducts(location: HorseLocation, products?: FeedProduct[]) {
     const candidates = products ?? (await this.options.repository.listProducts({ country: location.country, includeImported: location.allowImportedFeeds }));
     return this.availability.filterAndRank(candidates, location);
@@ -109,7 +135,7 @@ export class NutritionDataEngine {
   async recommendForProgram(program: FeedingProgram, options: { candidateProducts?: FeedProduct[]; maxRecommendations?: number } = {}) {
     const analysis = this.analyseFeedingProgram(program);
     const candidateProducts = options.candidateProducts ?? (await this.options.repository.listProducts({ includeImported: program.horse.location.allowImportedFeeds }));
-    const recommendations = this.recommendations.recommend(analysis, { candidateProducts, maxRecommendations: options.maxRecommendations });
+    const recommendations = this.safety.annotateRecommendations(this.recommendations.recommend(analysis, { candidateProducts, maxRecommendations: options.maxRecommendations }), analysis);
     await this.options.eventPublisher?.publish({ type: "nutrition.recommendations.changed", occurredAt: new Date().toISOString(), recommendations });
     return { analysis, recommendations };
   }
