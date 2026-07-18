@@ -29,6 +29,103 @@ export const launchManufacturerSourceConfigs: ManufacturerSourceConfig[] = [
     termsNotes: "Public Shopify catalogue/product pages; robots probe required before collection."
   },
   {
+    id: "hygain-au",
+    manufacturerName: "Hygain",
+    headquartersCountry: "AU",
+    website: "https://hygain.com.au",
+    countriesMarketed: ["AU"],
+    countriesOfficiallyDistributed: ["AU"],
+    defaultCurrency: "AUD",
+    acquisitionMode: "fully_automated",
+    collectionMethod: "public_page",
+    productCategories: ["feed", "performance_feed", "senior_feed", "balancer", "forage", "beet_pulp"],
+    catalogueUrls: ["https://hygain.com.au/collections/horse-feed"],
+    sitemapUrls: ["https://hygain.com.au/sitemap.xml"],
+    productUrlPatterns: ["hygain\\.com\\.au/products/"],
+    excludeProductUrlPatterns: ["hygain\\.com\\.au/products/(digest|allcare|recuperate|smoochies)"],
+    fallbackProductUrls: [
+      "https://hygain.com.au/products/hygain-sporthorse",
+      "https://hygain.com.au/products/hygain-balanced-horse-pellets",
+      "https://hygain.com.au/products/hygain-edge",
+      "https://hygain.com.au/products/hygain-grand-prix-premium",
+      "https://hygain.com.au/products/hygain-release"
+    ],
+    expectedRefreshDays: 30,
+    termsNotes: "Shopify robots allow product and collection pages. Checkout/cart endpoints are not used."
+  },
+  {
+    id: "prydes-au",
+    manufacturerName: "Pryde's EasiFeed",
+    headquartersCountry: "AU",
+    website: "https://www.prydes.com.au",
+    countriesMarketed: ["AU"],
+    countriesOfficiallyDistributed: ["AU"],
+    defaultCurrency: "AUD",
+    acquisitionMode: "fully_automated",
+    collectionMethod: "public_page",
+    productCategories: ["feed", "performance_feed", "breeding_feed", "youngstock_feed", "balancer"],
+    catalogueUrls: ["https://www.prydes.com.au/easifeed-three"],
+    sitemapUrls: ["https://www.prydes.com.au/sitemap.xml"],
+    productUrlPatterns: ["prydes\\.com\\.au/(easifeed|easi|easibalanced)"],
+    excludeProductUrlPatterns: ["easifeed-riding", "fact-sheets", "/tag/", "articles", "videos"],
+    fallbackProductUrls: [
+      "https://www.prydes.com.au/easifeed-three",
+      "https://www.prydes.com.au/easifeed-two",
+      "https://www.prydes.com.au/easimash",
+      "https://www.prydes.com.au/easiresponse",
+      "https://www.prydes.com.au/easiresult"
+    ],
+    expectedRefreshDays: 30,
+    termsNotes: "Squarespace robots disallow config/search/API surfaces; public product pages are collected only."
+  },
+  {
+    id: "barastoc-au",
+    manufacturerName: "Barastoc",
+    headquartersCountry: "AU",
+    website: "https://barastochorse.com.au",
+    countriesMarketed: ["AU"],
+    countriesOfficiallyDistributed: ["AU"],
+    defaultCurrency: "AUD",
+    acquisitionMode: "document_assisted",
+    collectionMethod: "public_pdf",
+    productCategories: ["feed", "performance_feed", "senior_feed", "breeding_feed"],
+    catalogueUrls: ["https://barastochorse.com.au"],
+    productUrlPatterns: ["assets\\.ctfassets\\.net/.+Barastoc.+\\.pdf", "assets\\.ctfassets\\.net/.+RID.+Barastoc.+\\.pdf"],
+    fallbackProductUrls: [
+      "https://assets.ctfassets.net/q7l641l774vh/0t0J6QaT2vfh2cRDW3H7H/db56480b8a5571a70cc07f8b7be446ce/Barastoc_Supreme_Specification_Sheet.pdf",
+      "https://assets.ctfassets.net/q7l641l774vh/1lDZq7EoV63nStfgauJVoc/da85bb1a29f4331663064975f44d093d/RID23047_Barastoc_Equine_SpecSheet_Legend_A4P_FA_LR.pdf",
+      "https://assets.ctfassets.net/q7l641l774vh/6gON3tB2cnV43a64e5sfGI/f1a8aa5384b55d0eb7c7380d06351793/RID23117_Barastoc_Equine_SpecSheet_StableMate_A4P_FA_NC.pdf",
+      "https://assets.ctfassets.net/q7l641l774vh/2QvVuMo9Y0bvGmQcobMwKW/3c47c7c163f6aa3d5028b19165a59c16/RID24231_Barastoc_Equine_SpecSheet_Senior_A4P_FA_NC.pdf",
+      "https://assets.ctfassets.net/q7l641l774vh/6elsi551cpye45as0FiNy8/ce7d3e905aad9c1526bd6436dd5fb2e9/RID23639a_Barastoc_Equine_SpecSheet_BreedNGrow_A4P_FA_WEB.pdf"
+    ],
+    documentUrlPatterns: ["\\.pdf$"],
+    expectedRefreshDays: 30,
+    termsNotes: "Official public specification sheets are document-assisted. Site catalogue URL requires further validation."
+  },
+  {
+    id: "coprice-au",
+    manufacturerName: "CopRice",
+    headquartersCountry: "AU",
+    website: "https://www.coprice.com.au",
+    countriesMarketed: ["AU"],
+    countriesOfficiallyDistributed: ["AU"],
+    defaultCurrency: "AUD",
+    acquisitionMode: "fully_automated",
+    collectionMethod: "public_page",
+    productCategories: ["feed", "performance_feed", "breeding_feed", "senior_feed"],
+    catalogueUrls: ["https://www.coprice.com.au/products/coprice-g"],
+    sitemapUrls: ["https://www.sunrice.com.au/sitemap.xml"],
+    productUrlPatterns: ["coprice\\.com\\.au/products/"],
+    excludeProductUrlPatterns: ["_payload\\.json"],
+    fallbackProductUrls: [
+      "https://www.coprice.com.au/products/coprice-g",
+      "https://www.coprice.com.au/products/coprice-m",
+      "https://www.coprice.com.au/products/versatile"
+    ],
+    expectedRefreshDays: 30,
+    termsNotes: "Robots allows public pages. Some product pages expose abbreviated nutrition summaries only; missing fields remain unavailable."
+  },
+  {
     id: "dengie-gb",
     manufacturerName: "Dengie",
     headquartersCountry: "GB",
@@ -143,10 +240,6 @@ export const launchManufacturerSourceConfigs: ManufacturerSourceConfig[] = [
 ];
 
 export const onboardedManufacturerBacklogConfigs: ManufacturerSourceConfig[] = [
-  cfg("hygain-au", "Hygain", "AU", "https://hygain.com.au", ["AU"], "AUD", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "balancer"], ["https://hygain.com.au/collections/horse-feed"], ["hygain\\.com\\.au/.+"]),
-  cfg("barastoc-au", "Barastoc", "AU", "https://barastochorse.com.au", ["AU"], "AUD", "administrator_assisted", ["feed", "performance_feed", "stud_feed", "youngstock_feed"], ["https://barastochorse.com.au/horse"], ["barastochorse\\.com\\.au/.+"]),
-  cfg("prydes-au", "Pryde's EasiFeed", "AU", "https://www.prydes.com.au", ["AU"], "AUD", "administrator_assisted", ["feed", "performance_feed", "balancer", "breeding_feed"], ["https://www.prydes.com.au/products"], ["prydes\\.com\\.au/.+"]),
-  cfg("coprice-au", "CopRice", "AU", "https://www.coprice.com.au", ["AU"], "AUD", "administrator_assisted", ["feed", "performance_feed", "senior_feed"], ["https://www.coprice.com.au/products/animal/horse"], ["coprice\\.com\\.au/.+"]),
   cfg("ker-au", "Kentucky Equine Research Australia", "AU", "https://ker.com/equinews/region/australia", ["AU"], "AUD", "administrator_assisted", ["supplement", "vitamin_mineral_supplement", "electrolyte", "oil"].map(categoryAlias), ["https://ker.com/equinews/region/australia"], ["ker\\.com/.+"]),
   cfg("ranvet-au", "Ranvet", "AU", "https://www.ranvet.com.au", ["AU"], "AUD", "administrator_assisted", ["supplement", "electrolyte", "joint_supplement", "digestive_supplement"].map(categoryAlias), ["https://www.ranvet.com.au/products"], ["ranvet\\.com\\.au/.+"]),
   cfg("kelato-au", "Kelato Animal Health", "AU", "https://kelato.com.au", ["AU"], "AUD", "administrator_assisted", ["supplement", "digestive_supplement", "electrolyte", "hoof_supplement"].map(categoryAlias), ["https://kelato.com.au/collections/equine"], ["kelato\\.com\\.au/.+"]),

@@ -5,6 +5,10 @@
 | Manufacturer | Countries | Acquisition mode | Status |
 |---|---|---|---|
 | Mitavite | AU | fully automated | Source config and parser implemented; live smoke opt-in |
+| Hygain | AU | fully automated | Live discovery passed; collection partial pending nutrient parser coverage |
+| Pryde's EasiFeed | AU | fully automated | Live discovery passed after URL exclusions; collection acceptance pending |
+| Barastoc | AU | document-assisted | Public PDF specification sheets discovered and collected in memory |
+| CopRice | AU | fully automated | Partial public product pages collected; complete catalogue discovery pending |
 | Dengie | GB, IE | fully automated | Source config and parser implemented; live smoke opt-in |
 | Dodson & Horrell | GB, IE | document-assisted | Source config, PDF text extraction and parser implemented; live smoke opt-in |
 | St. Hippolyt | DE, AT | fully automated | Source config and German label parser support implemented; live smoke opt-in |

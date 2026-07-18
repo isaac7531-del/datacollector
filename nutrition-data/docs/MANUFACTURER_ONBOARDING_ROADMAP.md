@@ -5,6 +5,10 @@ The engine now tracks a broader manufacturer onboarding registry beyond the init
 ## Current automated/live-smoke cohort
 
 - Mitavite AU
+- Hygain AU
+- Pryde's EasiFeed AU
+- Barastoc AU
+- CopRice AU
 - Dengie GB/IE
 - Dodson & Horrell GB/IE
 - St. Hippolyt DE/AT
@@ -78,3 +82,10 @@ New Zealand:
 ## Operational rule
 
 Adding a source to the onboarding registry does not make its products verified. Each source remains `administrator_assisted` until source reconnaissance confirms ordinary HTTP viability, robots/terms compatibility, parser stability, nutrient coverage, feeding-direction coverage and availability evidence.
+
+The first Australian connector batch has moved into live-smoke/collection testing:
+
+- Hygain: live discovery works; collection is partial until Shopify nutrient parsing coverage improves.
+- Pryde's EasiFeed: live discovery works after excluding non-product pages; collection acceptance remains pending.
+- Barastoc: document-assisted PDF discovery and collection work for five public specification sheets.
+- CopRice: partial public-page collection works for three product pages; complete catalogue discovery remains pending.

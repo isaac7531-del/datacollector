@@ -7,6 +7,8 @@ import { CostEngine } from "../costs/costEngine";
 import type { FeedingProgram, FeedProduct, HorseLocation, HorseProfile, IngestionRunSummary } from "../domain/types";
 import type { EventPublisher } from "../events/events";
 import { IngestionEngine, type IngestionRunOptions } from "../ingestion/ingestionEngine";
+import { launchManufacturerSourceConfigs, onboardedManufacturerSourceConfigs } from "../connectors/manufacturerSourceConfigs";
+import { ManufacturerAssessmentService } from "../operations/manufacturerAssessment";
 import { FeedingProgramEngine } from "../programs/feedingProgramEngine";
 import { RecommendationEngine } from "../recommendations/recommendationEngine";
 import { HorseRequirementsEngine } from "../requirements/requirementsEngine";
@@ -117,6 +119,39 @@ export class NutritionDataEngine {
 
   async operationalRuns(query: Parameters<NonNullable<NutritionDataRepository["listOperationalRuns"]>>[0] = {}) {
     return this.options.repository.listOperationalRuns?.(query) ?? [];
+  }
+
+  async manufacturerStatus(manufacturerId: string) {
+    return new ManufacturerAssessmentService(this.options.repository, onboardedManufacturerSourceConfigs, this.listConnectors()).assess(manufacturerId);
+  }
+
+  async manufacturerAcceptance(manufacturerId: string) {
+    const assessment = await this.manufacturerStatus(manufacturerId);
+    return {
+      ...assessment,
+      accepted: assessment.productionReady,
+      requiredEvidence: [
+        "catalogue discovery",
+        "product collection",
+        "nutrient parsing",
+        "availability evidence",
+        "immutable formulation versions",
+        "API/CLI verification",
+        "PostgreSQL-backed persistence"
+      ]
+    };
+  }
+
+  async manufacturerWorkboard() {
+    return new ManufacturerAssessmentService(this.options.repository, onboardedManufacturerSourceConfigs, this.listConnectors()).workboard();
+  }
+
+  listOnboardedManufacturerSources() {
+    return onboardedManufacturerSourceConfigs;
+  }
+
+  listLaunchManufacturerSources() {
+    return launchManufacturerSourceConfigs;
   }
 
   async localProducts(location: HorseLocation, products?: FeedProduct[]) {

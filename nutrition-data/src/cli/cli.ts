@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import { Command } from "commander";
+import { readFileSync } from "node:fs";
 import type { FeedingProgram, HorseProfile } from "../domain/types";
 import { manufacturerTargetReconnaissance } from "../connectors/manufacturerSourceConfigs";
+import { parseForageLaboratoryImport } from "../forage/laboratoryImports";
 import { OperationalWorkerRunner, type OperationalWorkerName } from "../workers/operationalWorkers";
 import { createOperationalEngine, createOperationalRuntime, createSeededEngine } from "./engineFactory";
 
@@ -36,6 +38,24 @@ program
   });
 
 program
+  .command("manufacturer:status")
+  .description("Assess manufacturer implementation status")
+  .requiredOption("--manufacturer <id>", "manufacturer connector id")
+  .action(async (options: { manufacturer: string }) => {
+    const engine = await createOperationalEngine();
+    print(await engine.manufacturerStatus(options.manufacturer));
+  });
+
+program
+  .command("manufacturer:assess")
+  .description("Alias for manufacturer:status with acceptance blockers")
+  .requiredOption("--manufacturer <id>", "manufacturer connector id")
+  .action(async (options: { manufacturer: string }) => {
+    const engine = await createOperationalEngine();
+    print(await engine.manufacturerStatus(options.manufacturer));
+  });
+
+program
   .command("manufacturer:discover")
   .description("Discover public product URLs for a manufacturer")
   .requiredOption("--manufacturer <id>", "manufacturer connector id")
@@ -55,6 +75,35 @@ program
   });
 
 program
+  .command("manufacturer:persist-smoke")
+  .description("Run a one-shot in-memory persistence smoke for a manufacturer")
+  .requiredOption("--manufacturer <id>", "manufacturer connector id")
+  .action(async (options: { manufacturer: string }) => {
+    const engine = await createOperationalEngine();
+    const summary = await engine.runConnector(options.manufacturer);
+    const status = await engine.manufacturerStatus(options.manufacturer);
+    print({ summary, status });
+  });
+
+program
+  .command("manufacturer:acceptance")
+  .description("Report manufacturer acceptance status")
+  .requiredOption("--manufacturer <id>", "manufacturer connector id")
+  .action(async (options: { manufacturer: string }) => {
+    const engine = await createOperationalEngine();
+    print(await engine.manufacturerAcceptance(options.manufacturer));
+  });
+
+program
+  .command("manufacturer:refresh")
+  .description("Refresh manufacturer product collection")
+  .requiredOption("--manufacturer <id>", "manufacturer connector id")
+  .action(async (options: { manufacturer: string }) => {
+    const engine = await createOperationalEngine();
+    print(await engine.runConnector(options.manufacturer));
+  });
+
+program
   .command("manufacturer:smoke")
   .description("Run a discovery-only smoke test for a manufacturer")
   .requiredOption("--manufacturer <id>", "manufacturer connector id")
@@ -68,6 +117,14 @@ program
   .command("source:matrix")
   .description("Print manufacturer source reconnaissance matrix")
   .action(() => print(manufacturerTargetReconnaissance));
+
+program
+  .command("manufacturer:workboard")
+  .description("Print manufacturer implementation workboard")
+  .action(async () => {
+    const engine = await createOperationalEngine();
+    print(await engine.manufacturerWorkboard());
+  });
 
 program
   .command("connector:health")
@@ -145,8 +202,35 @@ program.command("formulations:changed").description("List formulation-change ope
   const engine = await createOperationalEngine();
   print(await engine.operationalIssues({ type: "changed_formulation" }));
 });
+program.command("formulation:changes").description("Alias for formulations:changed").action(async () => {
+  const engine = await createOperationalEngine();
+  print(await engine.operationalIssues({ type: "changed_formulation" }));
+});
 program.command("backfill:plan").description("Create a backfill plan").requiredOption("--manufacturer <id>", "manufacturer id").action((options: { manufacturer: string }) => print({ planId: `backfill-${options.manufacturer}`, manufacturer: options.manufacturer, mode: "discover_then_collect" }));
 program.command("backfill:start").description("Start a backfill plan").requiredOption("--plan-id <id>", "plan id").action(async (options: { planId: string }) => print({ planId: options.planId, status: "accepted" }));
+
+program
+  .command("forage-lab:import")
+  .description("Import a forage laboratory report file")
+  .requiredOption("--lab <id>", "lab id")
+  .requiredOption("--file <path>", "CSV/TSV/text/PDF-extracted text file")
+  .option("--forage-type <type>", "forage type")
+  .option("--sample-date <date>", "sample date")
+  .action((options: { lab: any; file: string; forageType?: any; sampleDate?: string }) => {
+    const text = readFileSync(options.file, "utf8");
+    print(parseForageLaboratoryImport({ laboratory: options.lab, text, forageType: options.forageType, sampleDate: options.sampleDate, documentUrl: options.file }));
+  });
+
+program
+  .command("forage-lab:validate")
+  .description("Validate a forage laboratory report file without persistence")
+  .requiredOption("--lab <id>", "lab id")
+  .requiredOption("--file <path>", "CSV/TSV/text/PDF-extracted text file")
+  .action((options: { lab: any; file: string }) => {
+    const text = readFileSync(options.file, "utf8");
+    const analysis = parseForageLaboratoryImport({ laboratory: options.lab, text, documentUrl: options.file });
+    print({ valid: Object.keys(analysis.nutrients).length > 0, extractedNutrients: Object.keys(analysis.nutrients), analysis });
+  });
 
 for (const worker of ["discovery", "products", "availability", "prices", "recalculate", "outbox"] as OperationalWorkerName[]) {
   program.command(`worker:${worker}`).description(`Run ${worker} worker once`).option("--manufacturer <id>", "manufacturer connector id").option("--country <country>", "country code").action((options: { manufacturer?: string; country?: string }) => runWorker(worker, { connectorId: options.manufacturer, country: options.country }));
