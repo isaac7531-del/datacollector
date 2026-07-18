@@ -59,7 +59,8 @@ async function waitForPostgres(databaseUrl: string): Promise<void> {
 export async function applyMigrations(databaseUrl: string, migrations = [
   "001_competition_data_engine.sql",
   "002_postgres_engine_storage.sql",
-  "003_operational_readiness.sql"
+  "003_operational_readiness.sql",
+  "004_live_acquisition.sql"
 ]): Promise<void> {
   const pool = new Pool({ connectionString: databaseUrl });
   try {

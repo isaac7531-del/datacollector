@@ -2,8 +2,14 @@ import {
   CompetitionDataEngine,
   InMemoryCompetitionDataRepository,
   createBritishEventingConnector,
+  createEquestrianAustraliaConnector,
+  createEquiratingsConnector,
+  createEventingIrelandConnector,
   createFeiPublicServerConnector,
-  createRechenstelleConnector
+  createFranceEventingConnector,
+  createItalyEventingConnector,
+  createRechenstelleConnector,
+  createUseaConnector
 } from "../index";
 
 export function createSourceEngine() {
@@ -25,11 +31,18 @@ export function createSourceEngine() {
         ]
       }),
       createFeiPublicServerConnector({
+        id: "fei",
         enabled: false,
         urls: [
           "https://data.fei.org/Ranking/List.aspx"
         ]
-      })
+      }),
+      createEventingIrelandConnector(),
+      createUseaConnector(),
+      createEquiratingsConnector(),
+      createFranceEventingConnector(),
+      createItalyEventingConnector(),
+      createEquestrianAustraliaConnector()
     ]
   });
   return { engine, repository };

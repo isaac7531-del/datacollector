@@ -6,6 +6,9 @@ import { createCliEngine } from "./engineFactory";
 import { createSourceEngine, sourceIdFromCli } from "./sourceFactory";
 import { inspectMappingFile, mappingProfileSchema, previewWithMapping, testMappingProfile } from "../mapping/mappingProfile";
 import type { BackfillPlan } from "../domain/acquisition";
+import { getRegisteredSource, listRegisteredSources, validSourceIds } from "../sources/sourceRegistry";
+import { listRegisteredProviders } from "../connectors/providers/registry";
+import { UnsupportedSourceCapabilityError } from "../connectors/scaffoldConnector";
 
 const program = new Command();
 
@@ -129,15 +132,7 @@ program.command("outbox:dead-letter").description("Inspect dead-letter outbox re
 });
 
 program.command("source:list").description("List live acquisition sources").action(() => {
-  const { engine } = createSourceEngine();
-  console.log(JSON.stringify(engine.listConnectors().map((connector) => ({
-    id: connector.id,
-    name: connector.name,
-    acquisitionMode: connector.acquisitionMode,
-    automationLevel: connector.automationLevel,
-    sourceHealthStatus: connector.sourceHealthStatus,
-    accessLimitation: connector.accessLimitation
-  })), null, 2));
+  console.log(JSON.stringify(listRegisteredSources().map(summarySource), null, 2));
 });
 
 program.command("source:health").option("--source <source>", "Source id").description("Check live source health").action(async (options) => {
@@ -148,28 +143,94 @@ program.command("source:health").option("--source <source>", "Source id").descri
   console.log(JSON.stringify(health, null, 2));
 });
 
+program.command("source:status").requiredOption("--source <source>", "Source id").description("Show source lifecycle status").action((options) => {
+  const source = requireSource(options.source);
+  console.log(JSON.stringify(source, null, 2));
+});
+
+program.command("source:assess").requiredOption("--source <source>", "Source id").description("Show source assessment document path and status").action((options) => {
+  const source = requireSource(options.source);
+  console.log(JSON.stringify({
+    source: source.id,
+    assessment: assessmentPath(source.id),
+    lifecycleStatus: source.lifecycleStatus,
+    blockers: source.currentBlockers
+  }, null, 2));
+});
+
 program.command("source:discover").requiredOption("--source <source>", "Source id").option("--url <url>", "Specific source URL").description("Discover events from a live source").action(async (options) => {
   const { engine } = createSourceEngine();
   const connectorId = sourceIdFromCli(options.source);
-  const items = await engine.discover({ sourceIds: options.url ? [options.url] : undefined }, [connectorId]);
-  console.log(JSON.stringify(items, null, 2));
+  const source = requireSource(connectorId);
+  if (!isImplementedServerSource(connectorId)) {
+    printSourceCapability(source, "discoverRecentEvents");
+    return;
+  }
+  try {
+    const items = await engine.discover({ sourceIds: options.url ? [options.url] : undefined }, [connectorId]);
+    console.log(JSON.stringify(items, null, 2));
+  } catch (error) {
+    printCapabilityError(error);
+  }
 });
 
 program.command("source:collect-event").requiredOption("--source <source>", "Source id").requiredOption("--event-id <eventId>", "Event id or URL").description("Collect one source event").action(async (options) => {
   const { engine } = createSourceEngine();
   const connectorId = sourceIdFromCli(options.source);
-  const items = await engine.discover({ sourceIds: options.eventId.startsWith("http") ? [options.eventId] : undefined }, [connectorId]);
-  const item = items.find((candidate) => candidate.id === options.eventId || candidate.url === options.eventId) ?? items[0];
-  if (!item) throw new Error(`No event found for ${options.eventId}`);
-  const summary = await engine.runConnector(connectorId, { discovery: { sourceIds: [item.url ?? options.eventId] }, triggerType: "cli" });
-  console.log(JSON.stringify(summary, null, 2));
+  const source = requireSource(connectorId);
+  if (!isImplementedServerSource(connectorId)) {
+    printSourceCapability(source, "fetchEvent");
+    return;
+  }
+  try {
+    const items = await engine.discover({ sourceIds: options.eventId.startsWith("http") ? [options.eventId] : undefined }, [connectorId]);
+    const item = items.find((candidate) => candidate.id === options.eventId || candidate.url === options.eventId) ?? items[0];
+    if (!item) throw new Error(`No event found for ${options.eventId}`);
+    const summary = await engine.runConnector(connectorId, { discovery: { sourceIds: [item.url ?? options.eventId] }, triggerType: "cli" });
+    console.log(JSON.stringify(summary, null, 2));
+  } catch (error) {
+    printCapabilityError(error);
+  }
 });
 
 program.command("source:smoke").requiredOption("--source <source>", "Source id").description("Run a small live source smoke test").action(async (options) => {
   const { engine } = createSourceEngine();
   const connectorId = sourceIdFromCli(options.source);
-  const summary = await engine.runConnector(connectorId, { triggerType: "cli", dryRun: true });
-  console.log(JSON.stringify({ source: connectorId, smoke: "completed", summary }, null, 2));
+  const source = requireSource(connectorId);
+  if (!isImplementedServerSource(connectorId)) {
+    printSourceCapability(source, "runLiveSmokeTest");
+    return;
+  }
+  try {
+    const summary = await engine.runConnector(connectorId, { triggerType: "cli", dryRun: true });
+    console.log(JSON.stringify({ source: connectorId, smoke: "completed", summary }, null, 2));
+  } catch (error) {
+    printCapabilityError(error);
+  }
+});
+
+program.command("source:persist-smoke").requiredOption("--source <source>", "Source id").description("Run source smoke against configured persistent repository where available").action(async (options) => {
+  const source = requireSource(options.source);
+  console.log(JSON.stringify({
+    source: source.id,
+    status: "requires_persistent_database_configuration",
+    command: `DATABASE_URL=... npm run source:smoke -- --source ${source.id}`
+  }, null, 2));
+});
+
+program.command("source:acceptance").requiredOption("--source <source>", "Source id").description("Show production acceptance status").action((options) => {
+  const source = requireSource(options.source);
+  console.log(JSON.stringify({
+    source: source.id,
+    productionReady: source.lifecycleStatus === "production_ready",
+    lifecycleStatus: source.lifecycleStatus,
+    requiredGate: "See docs/SOURCE_IMPLEMENTATION_WORKBOARD.md and Phase 4B acceptance criteria.",
+    blockers: source.currentBlockers
+  }, null, 2));
+});
+
+program.command("providers:list").description("List known result providers").action(() => {
+  console.log(JSON.stringify(listRegisteredProviders(), null, 2));
 });
 
 program.command("backfill:plan").requiredOption("--source <source>", "Source id").requiredOption("--from <from>", "From date").requiredOption("--to <to>", "To date").option("--dry-run", "Dry run", true).description("Create a controlled backfill plan").action((options) => {
@@ -193,6 +254,72 @@ for (const command of ["backfill:start", "backfill:pause", "backfill:resume"]) {
   program.command(command).requiredOption("--plan-id <planId>", "Backfill plan id").action((options) => {
     console.log(JSON.stringify({ accepted: true, action: command, planId: options.planId }, null, 2));
   });
+}
+
+function requireSource(sourceId: string) {
+  const source = getRegisteredSource(sourceIdFromCli(sourceId));
+  if (!source) {
+    console.error(JSON.stringify({ error: "unknown_source", validSourceIds: validSourceIds() }, null, 2));
+    process.exit(1);
+  }
+  return source;
+}
+
+function summarySource(source: ReturnType<typeof listRegisteredSources>[number]) {
+  return {
+    id: source.id,
+    organisation: source.organisation,
+    aliases: source.aliases,
+    resultProviders: source.resultProviders,
+    acquisitionMode: source.acquisitionMode,
+    automationLevel: source.automationLevel,
+    lifecycleStatus: source.lifecycleStatus,
+    currentBlockers: source.currentBlockers
+  };
+}
+
+function printCapabilityError(error: unknown): void {
+  if (error instanceof UnsupportedSourceCapabilityError) {
+    console.log(JSON.stringify({
+      source: error.sourceId,
+      capability: error.capability,
+      status: error.status,
+      blocker: error.blocker
+    }, null, 2));
+    return;
+  }
+  throw error;
+}
+
+function isImplementedServerSource(sourceId: string): boolean {
+  return ["rechenstelle", "british-eventing"].includes(sourceId);
+}
+
+function printSourceCapability(source: ReturnType<typeof requireSource>, capability: string): void {
+  const status = source.capabilities.find((item) => item.capability === capability)?.status ?? "unsupported";
+  console.log(JSON.stringify({
+    source: source.id,
+    capability,
+    status,
+    lifecycleStatus: source.lifecycleStatus,
+    blockers: source.currentBlockers,
+    nextTask: "Implement source-specific discovery/collection before running this command as an acquisition workflow."
+  }, null, 2));
+}
+
+function assessmentPath(sourceId: string): string {
+  const map: Record<string, string> = {
+    "fei": "docs/sources/FEI_SOURCE_ASSESSMENT.md",
+    "british-eventing": "docs/sources/BRITISH_EVENTING_SOURCE_ASSESSMENT.md",
+    "rechenstelle": "docs/sources/RECHENSTELLE_SOURCE_ASSESSMENT.md",
+    "eventing-ireland": "docs/sources/EVENTING_IRELAND_SOURCE_ASSESSMENT.md",
+    "usea": "docs/sources/USEA_SOURCE_ASSESSMENT.md",
+    "equiratings": "docs/sources/EQUIRATINGS_SOURCE_ASSESSMENT.md",
+    "france-eventing": "docs/sources/FRANCE_EVENTING_SOURCE_ASSESSMENT.md",
+    "italy-eventing": "docs/sources/ITALY_EVENTING_SOURCE_ASSESSMENT.md",
+    "equestrian-australia": "docs/sources/AUSTRALIA_EVENTING_SOURCE_ASSESSMENT.md"
+  };
+  return map[sourceId] ?? `docs/sources/${sourceId.toUpperCase()}_SOURCE_ASSESSMENT.md`;
 }
 
 program.command("worker").description("Start the worker").action(async () => {

@@ -8,6 +8,8 @@ import { createPublicFileUrlConnector } from "../connectors/publicFileUrlConnect
 import type { DataSource, ManualEntrySubmission } from "../domain/types";
 import { RollbackService } from "../rollback/rollbackService";
 import type { CompetitionDataEngine } from "../service/CompetitionDataEngine";
+import { getRegisteredSource, listRegisteredSources } from "../sources/sourceRegistry";
+import { listRegisteredProviders } from "../connectors/providers/registry";
 
 export interface CompetitionDataApiServerOptions {
   engine: CompetitionDataEngine;
@@ -107,6 +109,89 @@ export function createCompetitionDataApiServer(options: CompetitionDataApiServer
       if (request.method === "GET" && url.pathname === "/connectors") {
         sendJson(response, 200, paginate(options.engine.listConnectors(), url));
         return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/sources") {
+        sendJson(response, 200, paginate(listRegisteredSources(), url));
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/providers") {
+        sendJson(response, 200, paginate(listRegisteredProviders(), url));
+        return;
+      }
+
+      if (request.method === "GET" && pathParts[0] === "providers" && pathParts[1]) {
+        const provider = listRegisteredProviders().find((item) => item.id === decodeURIComponent(pathParts[1] ?? ""));
+        sendJson(response, provider ? 200 : 404, provider ?? { error: "not_found" });
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/source-workboard") {
+        sendJson(response, 200, {
+          items: listRegisteredSources().map((source) => ({
+            source: source.id,
+            capabilities: source.capabilities.map((capability) => ({
+              Capability: capability.capability,
+              Status: capability.status,
+              Evidence: capability.evidence ?? "",
+              Blocker: capability.blocker ?? source.currentBlockers.join("; "),
+              "Next task": capability.nextTask ?? "Advance connector implementation and acceptance evidence."
+            }))
+          }))
+        });
+        return;
+      }
+
+      if (request.method === "GET" && pathParts[0] === "sources" && pathParts[1]) {
+        const sourceId = decodeURIComponent(pathParts[1]);
+        const source = getRegisteredSource(sourceId);
+        if (!source) {
+          sendJson(response, 404, { error: "not_found" });
+          return;
+        }
+        if (pathParts.length === 2) {
+          sendJson(response, 200, source);
+          return;
+        }
+        if (pathParts[2] === "capabilities") {
+          sendJson(response, 200, { source: source.id, capabilities: source.capabilities });
+          return;
+        }
+        if (pathParts[2] === "health") {
+          sendJson(response, 200, (await options.repository.getSourceHealthSummary?.(source.id)) ?? {
+            source: source.id,
+            acquisitionMode: source.acquisitionMode,
+            automationLevel: source.automationLevel,
+            discoveryHealth: source.lifecycleStatus === "blocked" ? "degraded" : "unknown",
+            collectionHealth: source.lifecycleStatus === "blocked" ? "degraded" : "unknown",
+            parsingHealth: "unknown",
+            blockedOrChallengeCount: source.lifecycleStatus === "blocked" ? 1 : 0,
+            nextScheduledRun: undefined
+          });
+          return;
+        }
+        if (pathParts[2] === "checkpoints") {
+          sendJson(response, 200, paginate((await options.repository.listSourceEventCheckpoints?.({ source: source.id })) ?? [], url));
+          return;
+        }
+        if (pathParts[2] === "acceptance") {
+          sendJson(response, 200, {
+            source: source.id,
+            productionReady: source.lifecycleStatus === "production_ready",
+            lifecycleStatus: source.lifecycleStatus,
+            blockers: source.currentBlockers
+          });
+          return;
+        }
+        if (pathParts[2] === "smoke-tests") {
+          sendJson(response, 200, {
+            source: source.id,
+            latest: "See docs/LIVE_SOURCE_SMOKE_RESULTS.md",
+            lifecycleStatus: source.lifecycleStatus
+          });
+          return;
+        }
       }
 
       if (pathParts[0] === "connectors" && pathParts[1]) {

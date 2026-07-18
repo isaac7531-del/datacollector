@@ -28,7 +28,10 @@ describe("PostgreSQL operational validation", () => {
         "competition_data_event_outbox",
         "competition_data_scheduler_locks",
         "competition_data_configuration",
-        "competition_data_mapping_profiles"
+        "competition_data_mapping_profiles",
+        "competition_data_source_event_checkpoints",
+        "competition_data_backfill_plans",
+        "competition_data_source_health"
       ]));
       expect(await repository.listIndexNames()).toEqual(expect.arrayContaining([
         "idx_competition_data_canonical_external_ids",
@@ -156,10 +159,10 @@ describe("PostgreSQL operational validation", () => {
     const pool = new Pool({ connectionString: harness.databaseUrl });
     try {
       await applyMigrations(harness.databaseUrl);
-      for (const migration of ["003_operational_readiness.rollback.sql", "002_postgres_engine_storage.rollback.sql"]) {
+      for (const migration of ["004_live_acquisition.rollback.sql", "003_operational_readiness.rollback.sql", "002_postgres_engine_storage.rollback.sql"]) {
         await pool.query(await readFile(join(process.cwd(), "migrations", migration), "utf8"));
       }
-      await applyMigrations(harness.databaseUrl, ["002_postgres_engine_storage.sql", "003_operational_readiness.sql"]);
+      await applyMigrations(harness.databaseUrl, ["002_postgres_engine_storage.sql", "003_operational_readiness.sql", "004_live_acquisition.sql"]);
       const repository = createPostgresRepositories({ connectionString: harness.databaseUrl });
       expect(await repository.listTableNames()).toEqual(expect.arrayContaining(["competition_data_canonical_records", "competition_data_configuration"]));
       await repository.pool.end();
