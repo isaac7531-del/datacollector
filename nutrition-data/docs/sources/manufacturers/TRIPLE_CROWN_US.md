@@ -1,0 +1,24 @@
+# Triple Crown United States Source Reconnaissance
+
+- Manufacturer: Triple Crown Feed
+- Countries: United States
+- Public catalogue entry point: https://www.triplecrownfeed.com/products/
+- Example product pages:
+  - https://www.triplecrownfeed.com/products/complete/
+  - https://www.triplecrownfeed.com/products/balancer-gold/
+  - https://www.triplecrownfeed.com/products/senior/
+  - https://www.triplecrownfeed.com/products/growth/
+- Product identifiers: WordPress product URL slug.
+- Category structure: all feeds, gold line, diamond line, forages, naturals, supplements.
+- Nutrition data: product pages expose guaranteed analysis lists including min/max declarations, amino acids, minerals, vitamins and microbial claims.
+- Feeding directions: present on product pages but varies by formula.
+- Ingredients: partial; some products require label/document parsing.
+- Packaging: bag sizes and line availability vary by page.
+- Availability: official US product site; retailer coverage requires stockist/distributor evidence.
+- Documents: old PDF upload paths are explicitly disallowed in robots.txt and must not be fetched. Current product pages are allowed.
+- Structured data: WordPress sitemap and product pages.
+- Robots/terms: robots.txt allows current product pages and disallows old PDF upload paths.
+- Ordinary HTTP viability: robots and products page fetched successfully.
+- Expected stability: high for guaranteed-analysis parser.
+- Connector mode: fully automated public-page connector.
+- Limitations: "in stock" must not be claimed without authorised inventory data.
