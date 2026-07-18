@@ -121,7 +121,7 @@ export const registeredSources: RegisteredSource[] = [
     partial: ["fetchStartLists", "detectCorrections", "resumeFromCheckpoint", "determineNextCheckTime"],
     blockers: ["PDF row extraction has low-confidence warnings on several real documents."]
   }),
-  source("british-eventing", "British Eventing", ["BE", "BritishEventing"], ["british-eventing"], "server", "fully_automated", "live_smoke_passed", ["https://www.britisheventing.com/results/event/"], {
+  source("british-eventing", "British Eventing", ["BE", "BritishEventing"], ["british-eventing"], "server", "fully_automated", "acceptance_testing", ["https://www.britisheventing.com/latest-results", "https://www.britisheventing.com/results/event/"], {
     supported: ["fetchEvent", "discoverClasses", "fetchPhaseResults", "fetchFinalResults", "buildBackfillPlan", "runLiveSmokeTest"],
     partial: ["discoverHistoricalEvents", "detectCorrections", "determineNextCheckTime"],
     blockers: ["Calendar/event discovery beyond known result URLs still needs production implementation."]

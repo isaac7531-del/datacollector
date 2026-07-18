@@ -16,6 +16,11 @@ export interface BritishEventingClassChunk {
   chunkId: string;
   definitionId: string;
   className: string;
+  originalClassLabel: string;
+  sectionLabel?: string;
+  canonicalLevel?: string;
+  classMappingConfidence: number;
+  classMappingVersion: string;
   loaderUrl: string;
 }
 
@@ -32,6 +37,9 @@ export interface BritishEventingEventLink {
 export interface BritishEventingRow {
   position?: number;
   status: "placed" | "eliminated" | "withdrawn" | "retired" | "disqualified" | "no_show" | "unknown";
+  originalStatus?: string;
+  statusMappingConfidence: number;
+  statusMappingVersion: string;
   horseName: string;
   riderName: string;
   points?: number;
@@ -45,6 +53,22 @@ export interface BritishEventingRow {
   raw: Record<string, string>;
 }
 
+export interface BritishEventingClassMapping {
+  originalClassLabel: string;
+  sectionLabel?: string;
+  canonicalLevel?: string;
+  confidence: number;
+  version: string;
+}
+
+export interface BritishEventingStatusMapping {
+  originalStatus: string;
+  canonicalStatus: BritishEventingRow["status"] | "non_competitive" | "abandoned" | "cancelled" | "postponed" | "provisional" | "final";
+  sourcePhase?: "overall" | "dressage" | "showjumping" | "cross_country";
+  confidence: number;
+  version: string;
+}
+
 export function parseBritishEventingEventPage(html: string, pageUrl: string): BritishEventingEvent {
   const title = clean(html.match(/<meta property="og:title" content="Results:\s*([^"]+)"/i)?.[1] ?? html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? "British Eventing event");
   const eventId = pageUrl.match(/~([^/?#]+)/)?.[1] ?? title;
@@ -52,13 +76,22 @@ export function parseBritishEventingEventPage(html: string, pageUrl: string): Br
   const metadataMatch = pageText.match(/Name:\s*(.*?)\s+Date:\s*(.*?)\s+Location:\s*(.*?)\s+Class:/i);
   const dateText = metadataMatch?.[2];
   const location = metadataMatch?.[3]?.replace(/\s+Select a different year.*$/i, "").trim();
-  const classes = [...html.matchAll(/<article class="load-results-table[^>]+data-entity_id="([^"]+)"[^>]+data-chunk_id="([^"]+)"[^>]+data-definition_id="([^"]+)"[\s\S]*?<h3>"?([^"<]+)"?\s+loading/gi)].map((match) => ({
-    entityId: match[1] ?? "",
-    chunkId: match[2] ?? "",
-    definitionId: match[3] ?? "",
-    className: clean(match[4] ?? ""),
-    loaderUrl: new URL(`/results-table-loader/${match[1]}/${match[2]}/${match[3]}`, pageUrl).toString()
-  }));
+  const classes = [...html.matchAll(/<article class="load-results-table[^>]+data-entity_id="([^"]+)"[^>]+data-chunk_id="([^"]+)"[^>]+data-definition_id="([^"]+)"[\s\S]*?<h3>"?([^"<]+)"?\s+loading/gi)].map((match) => {
+    const className = clean(match[4] ?? "");
+    const mapping = mapBritishEventingClass(className);
+    return {
+      entityId: match[1] ?? "",
+      chunkId: match[2] ?? "",
+      definitionId: match[3] ?? "",
+      className,
+      originalClassLabel: mapping.originalClassLabel,
+      sectionLabel: mapping.sectionLabel,
+      canonicalLevel: mapping.canonicalLevel,
+      classMappingConfidence: mapping.confidence,
+      classMappingVersion: mapping.version,
+      loaderUrl: new URL(`/results-table-loader/${match[1]}/${match[2]}/${match[3]}`, pageUrl).toString()
+    };
+  });
   const historicalUrls = [...html.matchAll(/href="([^"]*\/results\/event\/[^"]+)"/gi)].map((match) => new URL(match[1] ?? "", pageUrl).toString());
   return {
     id: `british-eventing:${eventId}`,
@@ -149,7 +182,11 @@ export function normalizeBritishEventing(event: BritishEventingEvent, chunk: Bri
         publicationStatus: "unknown"
       },
       raw: row.raw,
-      sourceClassId: chunk.chunkId
+      sourceClassId: chunk.chunkId,
+      originalStatus: row.originalStatus,
+      canonicalStatus: row.status,
+      statusMappingConfidence: row.statusMappingConfidence,
+      statusMappingVersion: row.statusMappingVersion
     }
   }));
 
@@ -172,8 +209,17 @@ export function normalizeBritishEventing(event: BritishEventingEvent, chunk: Bri
         name: chunk.className,
         discipline: "eventing",
         classCode: chunk.chunkId,
-        section: chunk.className.match(/Section\s+(.+)$/i)?.[1],
-        metadata: { sourceUrl, entityId: chunk.entityId, definitionId: chunk.definitionId }
+        section: chunk.sectionLabel ?? chunk.className.match(/Section\s+(.+)$/i)?.[1],
+        level: chunk.canonicalLevel,
+        metadata: {
+          sourceUrl,
+          entityId: chunk.entityId,
+          definitionId: chunk.definitionId,
+          originalClassLabel: chunk.originalClassLabel,
+          canonicalLevel: chunk.canonicalLevel,
+          classMappingConfidence: chunk.classMappingConfidence,
+          classMappingVersion: chunk.classMappingVersion
+        }
       }
     ],
     horses: dedupe(results.map((result) => ({ externalIds: [result.horseExternalId as SourceIdentifier], name: result.horseName ?? "" })), (horse) => horse.name),
@@ -198,9 +244,13 @@ export function normalizeBritishEventing(event: BritishEventingEvent, chunk: Bri
 function mapRow(headers: string[], cells: string[]): BritishEventingRow {
   const raw = Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? ""]));
   const positionText = raw.POS ?? raw.Pos ?? raw.Position ?? "";
+  const statusMapping = mapBritishEventingStatus(positionText || raw.Total);
   return {
     position: parseIntValue(positionText),
-    status: parseStatus(positionText || raw.Total),
+    status: ["non_competitive", "abandoned", "cancelled", "postponed", "provisional", "final"].includes(statusMapping.canonicalStatus) ? "unknown" : statusMapping.canonicalStatus as BritishEventingRow["status"],
+    originalStatus: statusMapping.originalStatus,
+    statusMappingConfidence: statusMapping.confidence,
+    statusMappingVersion: statusMapping.version,
     horseName: raw.Horse ?? "",
     riderName: raw.Rider ?? "",
     points: parseNumber(raw.Pts),
@@ -215,14 +265,59 @@ function mapRow(headers: string[], cells: string[]): BritishEventingRow {
   };
 }
 
-function parseStatus(value: string | undefined): BritishEventingRow["status"] {
+export function mapBritishEventingStatus(value: string | undefined, sourcePhase: BritishEventingStatusMapping["sourcePhase"] = "overall"): BritishEventingStatusMapping {
   const upper = (value ?? "").toUpperCase();
-  if (upper.includes("NS")) return "no_show";
-  if (upper.includes(" W") || upper === "W") return "withdrawn";
-  if (upper.includes(" R") || upper === "R") return "retired";
-  if (upper.includes(" D") || upper === "D") return "disqualified";
-  if (upper.includes("E")) return "eliminated";
-  return "placed";
+  const version = "british-eventing-status-2026-07-18";
+  if (upper.includes("NS")) return status(value, "no_show", sourcePhase, 1, version);
+  if (/\bHC\b/.test(upper)) return status(value, "non_competitive", sourcePhase, 1, version);
+  if (upper.includes(" W") || upper === "W") return status(value, "withdrawn", sourcePhase, 1, version);
+  if (upper.includes(" R") || upper === "R") return status(value, "retired", sourcePhase, 1, version);
+  if (upper.includes(" D") || upper === "D") return status(value, "disqualified", sourcePhase, 1, version);
+  if (upper.includes("ABANDONED") || upper === "A") return status(value, "abandoned", sourcePhase, 1, version);
+  if (upper.includes("CANCEL")) return status(value, "cancelled", sourcePhase, 1, version);
+  if (upper.includes("POSTPONE")) return status(value, "postponed", sourcePhase, 1, version);
+  if (upper.includes("PROVISIONAL")) return status(value, "provisional", sourcePhase, 1, version);
+  if (upper.includes("FINAL")) return status(value, "final", sourcePhase, 0.9, version);
+  if (upper.includes("E")) return status(value, "eliminated", sourcePhase, 0.95, version);
+  return status(value, "placed", sourcePhase, value ? 0.8 : 0.6, version);
+}
+
+export function mapBritishEventingClass(label: string): BritishEventingClassMapping {
+  const version = "british-eventing-class-2026-07-18";
+  const sectionLabel = label.match(/Section\s+(.+)$/i)?.[1];
+  const classPart = label.replace(/\s+-\s+Section\s+.+$/i, "").trim();
+  const normalized = classPart.toUpperCase().replace(/\s+/g, "");
+  const mappings: Array<[RegExp, string]> = [
+    [/BE80/, "BE80"],
+    [/BE90/, "BE90"],
+    [/BE100PLUS|BE100\+/, "BE100Plus"],
+    [/BE100/, "BE100"],
+    [/ONU18/, "Open Novice Under 18"],
+    [/ON(?!U18)/, "Open Novice"],
+    [/\bN\b|NOVICE/, "Novice"],
+    [/\bI\b|INTERMEDIATE/, "Intermediate"],
+    [/\bA\b|ADVANCED/, "Advanced"],
+    [/CCI-S1\*|CCI1\*/, "CCI1*-S"],
+    [/CCI-S2\*|CCI2\*/, "CCI2*-S"],
+    [/CCI-S3\*|CCI3\*/, "CCI3*-S"],
+    [/CCI-S4\*|CCI4\*/, "CCI4*-S"],
+    [/AE80/, "Arena Eventing 80"],
+    [/AE90/, "Arena Eventing 90"],
+    [/AE100OPEN/, "Arena Eventing 100 Open"],
+    [/AE100/, "Arena Eventing 100"]
+  ];
+  const match = mappings.find(([pattern]) => pattern.test(normalized));
+  return {
+    originalClassLabel: label,
+    sectionLabel,
+    canonicalLevel: match?.[1],
+    confidence: match ? 0.9 : 0.2,
+    version
+  };
+}
+
+function status(originalStatus: string | undefined, canonicalStatus: BritishEventingStatusMapping["canonicalStatus"], sourcePhase: BritishEventingStatusMapping["sourcePhase"], confidence: number, version: string): BritishEventingStatusMapping {
+  return { originalStatus: originalStatus ?? "", canonicalStatus, sourcePhase, confidence, version };
 }
 
 function parseNumber(value: string | undefined): number | undefined {

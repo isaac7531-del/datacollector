@@ -335,7 +335,7 @@ export function createCompetitionDataApiServer(options: CompetitionDataApiServer
         return;
       }
 
-      if (request.method === "GET" && ["events", "horses", "riders", "results", "combinations"].includes(pathParts[0] ?? "")) {
+      if (request.method === "GET" && ["competitions", "events", "horses", "riders", "results", "combinations"].includes(pathParts[0] ?? "")) {
         sendJson(response, 200, await readRepositoryData(options.repository, pathParts));
         return;
       }
@@ -451,8 +451,16 @@ async function readRepositoryData(repository: CompetitionDataRepository, pathPar
     listCanonicalRecords?: (entityType?: string) => Promise<unknown[]>;
   };
   if (typeof postgres.listCanonicalRecords === "function") {
-    const entityType = pathParts[0] === "events" ? "event" : pathParts[0]?.replace(/s$/, "");
+    const entityType = pathParts[0] === "competitions" ? "competition" : pathParts[0] === "events" ? "event" : pathParts[0]?.replace(/s$/, "");
     const records = await postgres.listCanonicalRecords(entityType);
+    if (pathParts[0] === "competitions" && pathParts[1] && pathParts[2] === "classes") {
+      const classes = await postgres.listCanonicalRecords("event");
+      return { items: classes.filter((item) => JSON.stringify(item).includes(pathParts[1] ?? "")) };
+    }
+    if (pathParts[0] === "competitions" && pathParts[1] && pathParts[2] === "results") {
+      const results = await postgres.listCanonicalRecords("result");
+      return { items: results.filter((item) => JSON.stringify(item).includes(pathParts[1] ?? "")) };
+    }
     if (pathParts[1] && pathParts[2] === "results") {
       return { items: records.filter((result) => JSON.stringify(result).includes(pathParts[1] ?? "")) };
     }

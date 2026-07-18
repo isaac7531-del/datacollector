@@ -52,6 +52,32 @@ Interpretation:
 - Parser produced records for two class chunks.
 - British Eventing connector is not production-ready until at least five real events across target levels/years are accepted and source terms are approved.
 
+PostgreSQL persistence command:
+
+```bash
+DATABASE_URL=... npm run source:persist-smoke -- --source british-eventing --limit 2
+```
+
+Result:
+
+- Discovered events: 2
+- Payloads: 2
+- Graphs: 6
+- Created: 96
+- Updated: 12
+- Issues: none
+
+Acceptance command:
+
+```bash
+DATABASE_URL=... npm run source:acceptance -- --source british-eventing
+```
+
+Result:
+
+- Command connected to PostgreSQL and returned `productionReady: false`.
+- Missing evidence: 25-event persisted corpus, real correction observation, withdrawal/retirement/elimination coverage across accepted corpus, restart row-count acceptance report.
+
 ## FEI
 
 No FEI live server smoke is classified as successful.

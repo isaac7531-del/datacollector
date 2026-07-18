@@ -10,6 +10,7 @@ export * from "./config/defaultSeed";
 export * from "./config/runtime";
 export * from "./connectors/csvResultsConnector";
 export * from "./connectors/british-eventing/connector";
+export * from "./connectors/british-eventing/corrections";
 export * from "./connectors/british-eventing/parser";
 export * from "./connectors/equestrian-australia/connector";
 export * from "./connectors/excelResultsConnector";

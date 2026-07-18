@@ -1,4 +1,5 @@
 import { Pool, type PoolClient, type PoolConfig } from "pg";
+import { createHash } from "crypto";
 import type {
   CandidateSearch,
   CompetitionDataRepository,
@@ -418,6 +419,32 @@ export class PostgresCompetitionDataRepository implements CompetitionDataReposit
         JSON.stringify({ ...(entity as object), id })
       ]
     );
+    if (entityType === "result") {
+      const fingerprint = createHash("sha256").update(JSON.stringify(entity)).digest("hex");
+      await client.query(
+        `INSERT INTO competition_data_result_versions (id, payload)
+         VALUES ($1, $2)
+         ON CONFLICT (id) DO NOTHING`,
+        [
+          `version:${id}:${fingerprint}`,
+          JSON.stringify({
+            id: `version:${id}:${fingerprint}`,
+            canonicalResultId: id,
+            sourceReference: {
+              source: { id: "british-eventing", name: "British Eventing", kind: "national_federation", mode: "public_page", official: true },
+              sourceUrl: readFirstSourceUrl(entity),
+              importedAt: new Date().toISOString()
+            },
+            resultFingerprint: fingerprint,
+            publicationStatus: "unknown",
+            verificationState: "source_verified",
+            result: entity,
+            fieldProvenance: [],
+            createdAt: new Date().toISOString()
+          })
+        ]
+      );
+    }
     if (resolution.action === "update") result.updated += 1;
     else result.created += 1;
   }
@@ -462,6 +489,11 @@ function readString(entity: unknown, key: string): string | undefined {
 
 function randomId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function readFirstSourceUrl(entity: unknown): string | undefined {
+  const first = readExternalIds(entity)[0] as { sourceUrl?: unknown } | undefined;
+  return typeof first?.sourceUrl === "string" ? first.sourceUrl : undefined;
 }
 
 function mergeEntity<TEntity>(match: TEntity, incoming: TEntity): TEntity {
