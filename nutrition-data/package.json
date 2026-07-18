@@ -40,6 +40,7 @@
     "manufacturer:acceptance": "tsx src/cli/cli.ts manufacturer:acceptance",
     "manufacturer:refresh": "tsx src/cli/cli.ts manufacturer:refresh",
     "manufacturer:workboard": "tsx src/cli/cli.ts manufacturer:workboard",
+    "australia:acceptance-report": "tsx src/cli/cli.ts australia:acceptance-report",
     "product:refresh": "tsx src/cli/cli.ts product:refresh",
     "product:versions": "tsx src/cli/cli.ts product:versions",
     "availability:refresh": "tsx src/cli/cli.ts availability:refresh",

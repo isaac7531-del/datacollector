@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import type { FeedingProgram, HorseProfile } from "../domain/types";
 import { manufacturerTargetReconnaissance } from "../connectors/manufacturerSourceConfigs";
 import { parseForageLaboratoryImport } from "../forage/laboratoryImports";
+import { buildAustralianAcceptanceReport } from "../operations/australiaAcceptanceReport";
 import { OperationalWorkerRunner, type OperationalWorkerName } from "../workers/operationalWorkers";
 import { createOperationalEngine, createOperationalRuntime, createSeededEngine } from "./engineFactory";
 
@@ -124,6 +125,20 @@ program
   .action(async () => {
     const engine = await createOperationalEngine();
     print(await engine.manufacturerWorkboard());
+  });
+
+program
+  .command("australia:acceptance-report")
+  .description("Summarise Australian manufacturer production-acceptance evidence")
+  .option("--collect-live", "Run live in-memory collection for Australian manufacturers before reporting")
+  .action(async (options: { collectLive?: boolean }) => {
+    const engine = await createOperationalEngine();
+    if (options.collectLive) {
+      for (const manufacturer of ["mitavite-au", "hygain-au", "prydes-au", "barastoc-au", "coprice-au"]) {
+        await engine.runConnector(manufacturer);
+      }
+    }
+    print(await buildAustralianAcceptanceReport(engine));
   });
 
 program

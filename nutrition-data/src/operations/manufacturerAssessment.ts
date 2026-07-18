@@ -78,12 +78,14 @@ export class ManufacturerAssessmentService {
     const priceCoverage = coverage(products, (product) => product.prices.length > 0);
     const versioned = await Promise.all(products.map((product) => this.repository.listProductVersions?.(product.id) ?? []));
     const hasVersions = productCount > 0 && versioned.every((versions) => versions.length > 0);
-    const productionReady = productCount >= 5 && nutrientCoverage >= 0.75 && availabilityCoverage >= 0.75 && hasVersions;
+    const productionReady = productCount >= 5 && nutrientCoverage >= 0.75 && ingredientCoverage >= 0.75 && feedingDirectionCoverage >= 0.75 && availabilityCoverage >= 0.75 && hasVersions;
     const status = productionReady ? "production_ready" : productCount > 0 ? "collection_partial" : descriptor ? "scaffolded" : "registered";
     const blockers = [];
     if (!productCount) blockers.push("No products collected in the active repository.");
     if (productCount > 0 && productCount < 5) blockers.push("Collected product count below manufacturer acceptance threshold.");
     if (nutrientCoverage < 0.75) blockers.push("Nutrient coverage below acceptance threshold.");
+    if (ingredientCoverage < 0.75) blockers.push("Ingredient coverage below acceptance threshold.");
+    if (feedingDirectionCoverage < 0.75) blockers.push("Feeding direction coverage below acceptance threshold.");
     if (availabilityCoverage < 0.75) blockers.push("Availability evidence below acceptance threshold.");
     if (!hasVersions) blockers.push("Immutable formulation versions not proven for every collected product.");
 

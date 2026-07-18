@@ -65,8 +65,13 @@ function normaliseIngredient(raw: string, order: number, sourceUrl?: string): In
 }
 
 function extractIngredientSegment(text: string): string | undefined {
-  const match = text.match(/(?:ingredients|composition|zusammensetzung|includes)\s*:?\s*([\s\S]{20,900}?)(?:\n\s*\n|guaranteed analysis|nutritional|typical analysis|feeding|additives|inhaltsstoffe)/i);
-  return match?.[1]?.replace(/\s+/g, " ").trim();
+  const match = text.match(/(?:ingredients|composition|zusammensetzung|includes|what'?s in [^\n]+)\s*:?\s*([\s\S]{20,1200}?)(?:\n\s*\n|guaranteed analysis|nutrition information|nutritional|typical analysis|feeding|for the best results|additives|inhaltsstoffe)/i);
+  if (match?.[1]) return match[1].replace(/\s+/g, " ").trim();
+  const ingredientDense = text.match(/((?:[A-Z][A-Za-z®™\-/& ]+,\s*){3,}[A-Z][A-Za-z®™\-/& ]+\.?)/);
+  if (ingredientDense?.[1] && /meal|barley|oat|lucerne|alfalfa|canola|molasses|vitamin|mineral|salt|calcium|phosphate|lupin|sunflower|rice|bran/i.test(ingredientDense[1])) {
+    return ingredientDense[1].replace(/\s+/g, " ").trim();
+  }
+  return undefined;
 }
 
 function inferGroup(value: string): IngredientTaxonomyGroup {

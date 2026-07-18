@@ -34,6 +34,16 @@ export const CORE_NUTRIENTS = {
   biotin: "Biotin",
   choline: "Choline",
   b_vitamins: "B Vitamins",
+  threonine: "Threonine",
+  leucine: "Leucine",
+  isoleucine: "Isoleucine",
+  valine: "Valine",
+  tryptophan: "Tryptophan",
+  bcaa: "BCAA",
+  esc: "Ethanol soluble carbohydrates",
+  wsc: "Water soluble carbohydrates",
+  nsc: "Non-structural carbohydrates",
+  chromium: "Chromium",
   omega_3: "Omega 3",
   omega_6: "Omega 6",
   electrolytes: "Electrolytes",
@@ -46,6 +56,9 @@ export type CoreNutrientKey = keyof typeof CORE_NUTRIENTS;
 
 const SYNONYMS: Record<string, CoreNutrientKey> = {
   de: "digestible_energy",
+  energy: "digestible_energy",
+  energymjdekg: "digestible_energy",
+  energymjdekG: "digestible_energy",
   digestibleenergy: "digestible_energy",
   digestible_energy: "digestible_energy",
   me: "metabolisable_energy",
@@ -64,6 +77,12 @@ const SYNONYMS: Record<string, CoreNutrientKey> = {
   fat: "fat",
   oil: "oil",
   starch: "starch",
+  esc: "esc",
+  ethanolsolublecarbohydrate: "esc",
+  wsc: "wsc",
+  watersolublecarbohydrate: "wsc",
+  nsc: "nsc",
+  nonstructuralcarbohydrate: "nsc",
   sugar: "sugar",
   sugars: "sugar",
   calcium: "calcium",
@@ -84,6 +103,7 @@ const SYNONYMS: Record<string, CoreNutrientKey> = {
   selenium: "selenium",
   iodine: "iodine",
   cobalt: "cobalt",
+  chromium: "chromium",
   sulfur: "sulphur",
   sulphur: "sulphur",
   vitamina: "vitamin_a",
@@ -95,6 +115,12 @@ const SYNONYMS: Record<string, CoreNutrientKey> = {
   vitamink: "vitamin_k",
   vitamin_k: "vitamin_k",
   biotin: "biotin",
+  threonine: "threonine",
+  leucine: "leucine",
+  isoleucine: "isoleucine",
+  valine: "valine",
+  tryptophan: "tryptophan",
+  bcaa: "bcaa",
   omega3: "omega_3",
   omega_3: "omega_3",
   omega6: "omega_6",
@@ -179,7 +205,7 @@ function inferUnit(rawKey: string): NutrientUnit {
   const key = canonicalNutrientKey(rawKey);
   if (key.includes("energy")) return "mj_per_kg";
   if (key.startsWith("vitamin_")) return "iu_per_kg";
-  if (["copper", "zinc", "manganese", "iron", "selenium", "iodine", "cobalt", "biotin"].includes(key)) return "mg_per_kg";
+  if (["copper", "zinc", "manganese", "iron", "selenium", "iodine", "cobalt", "chromium", "biotin"].includes(key)) return "mg_per_kg";
   return "percent";
 }
 

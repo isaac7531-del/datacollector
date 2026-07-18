@@ -29,7 +29,7 @@ export interface ParseProductPageOptions {
 }
 
 const NUTRIENT_LINE =
-  /([A-Za-zÀ-ÿ0-9 &().+\-/]+?)\s*(?:=|:|\s{2,}|\|)\s*([<>]?\s*\d[\d,.]*(?:\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|iu\/kg|i\.u\/kg|iu\/lb\.?|mg\/lb\.?|MJ\/kg|Mcal\/lb|MJ|g|mg|mcg|ug|iu))?)/gi;
+  /([A-Za-zÀ-ÿ0-9 &().+\-/]+?)\s*(?:=|:|\s{2,}|\|)\s*([<>]?\s*\d[\d,.]*(?:\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|kcal\/kg|iu\/kg|i\.u\/kg|iu\/lb\.?|mg\/lb\.?|MJ\/kg|Mcal\/lb|MJ|kcal|g|mg|mcg|ug|iu))?)/gi;
 
 export function parseProductPage(options: ParseProductPageOptions): ParsedProductPage {
   const text = htmlToText(options.htmlOrText);
@@ -128,24 +128,61 @@ export function parseProductPage(options: ParseProductPageOptions): ParsedProduc
 export function parseNutrientsFromText(textOrHtml: string, sourceUrl: string): NutrientMap {
   const text = htmlToText(textOrHtml);
   const nutrients: NutrientMap = {};
+  const unknownNutrientLabels: string[] = [];
   for (const match of text.matchAll(NUTRIENT_LINE)) {
     const label = cleanLabel(match[1]);
     const rawValue = match[2];
     if (!looksLikeNutrient(label)) continue;
-    const fact = parseNutrientDeclaration(label, rawValue, sourceUrl, match[0]);
-    if (!fact) continue;
-    nutrients[fact.canonicalKey] = nutrientFactToValue(fact);
+    addNutrient(nutrients, unknownNutrientLabels, label, rawValue, sourceUrl, match[0]);
   }
-  for (const line of text.split(/\n/)) {
+  const lines = text.split(/\n/).map((line) => line.trim()).filter(Boolean);
+  for (const line of lines) {
     const clean = line.trim();
     if (!looksLikeNutrient(clean)) continue;
-    const match = clean.match(/^(.{3,80}?)\s+([<>]?\s*\d[\d,.]*(?:\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|iu\/kg|i\.u\/kg|iu\/lb\.?|mg\/lb\.?|MJ\/kg|Mcal\/lb|MJ|g|mg|mcg|ug|iu))?)$/i);
-    if (!match) continue;
-    const fact = parseNutrientDeclaration(cleanLabel(match[1]), match[2], sourceUrl, clean);
-    if (!fact) continue;
-    nutrients[fact.canonicalKey] = nutrientFactToValue(fact);
+    const spaced = clean.match(/^(.{3,80}?)\s+([<>]?\s*\d[\d,.]*(?:\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|kcal\/kg|iu\/kg|i\.u\/kg|iu\/lb\.?|mg\/lb\.?|MJ\/kg|Mcal\/lb|MJ|kcal|g|mg|mcg|ug|iu))?)$/i);
+    if (spaced) {
+      addNutrient(nutrients, unknownNutrientLabels, cleanLabel(spaced[1]), spaced[2], sourceUrl, clean);
+      continue;
+    }
+    const compact = clean.match(/^([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ /().+\-]*?(?:B12|B6|B5|B3|B2|B1|D3|A|D|E|K)?)([<>]?\d[\d,.]*(?:\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|kcal\/kg|iu\/kg|i\.u\/kg|MJ\/kg|Mcal\/lb|MJ|kcal|g|mg|mcg|ug|iu))?)$/i);
+    if (compact && looksLikeNutrient(compact[1])) {
+      addNutrient(nutrients, unknownNutrientLabels, cleanLabel(compact[1]), compact[2], sourceUrl, clean);
+      continue;
+    }
+    for (const valueFirst of clean.matchAll(/([<>]?\d[\d,.]*\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|kcal\/kg|iu\/kg|i\.u\/kg|MJ\/kg|Mcal\/lb|MJ|kcal|g|mg|mcg|ug|iu))\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ /().+\-]{2,40})/gi)) {
+      if (looksLikeNutrient(valueFirst[2])) addNutrient(nutrients, unknownNutrientLabels, cleanLabel(valueFirst[2]), valueFirst[1], sourceUrl, clean);
+    }
+  }
+  for (let index = 0; index < lines.length - 1; index += 1) {
+    const label = cleanLabel(lines[index]);
+    const value = lines[index + 1];
+    if (!looksLikeNutrient(label) || !/^[<>]?\d[\d,.]*\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|kcal\/kg|iu\/kg|i\.u\/kg|MJ\/kg|Mcal\/lb|MJ|kcal|g|mg|mcg|ug|iu)?$/i.test(value)) continue;
+    addNutrient(nutrients, unknownNutrientLabels, label, value, sourceUrl, `${label} ${value}`);
+  }
+  if (unknownNutrientLabels.length) {
+    nutrients.__unresolved_nutrient_labels = {
+      key: "__unresolved_nutrient_labels",
+      label: "Unresolved nutrient labels",
+      value: unknownNutrientLabels.length,
+      unit: "count",
+      basis: "as_fed",
+      sourceText: Array.from(new Set(unknownNutrientLabels)).join("; "),
+      confidence: "low"
+    };
   }
   return nutrients;
+}
+
+function addNutrient(nutrients: NutrientMap, unknownNutrientLabels: string[], label: string, rawValue: string, sourceUrl: string, sourceText: string): void {
+  const fact = parseNutrientDeclaration(label, rawValue, sourceUrl, sourceText);
+  if (!fact) {
+    unknownNutrientLabels.push(label);
+    return;
+  }
+  if (fact.canonicalKey === label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") && !isKnownNutrientKey(fact.canonicalKey)) {
+    unknownNutrientLabels.push(label);
+  }
+  nutrients[fact.canonicalKey] = nutrientFactToValue(fact);
 }
 
 export function extractProductLinks(html: string, baseUrl: string, patterns: string[]): string[] {
@@ -226,7 +263,7 @@ function parseWarningsFromText(text: string): string[] {
 }
 
 function extractFeedingText(text: string): string | undefined {
-  const match = text.match(/feeding (?:guide|guidelines|directions|recommendations)[\s\S]{0,1200}/i);
+  const match = text.match(/(?:feeding (?:guide|guidelines|directions|recommendations|rates)|how much should i feed|daily feeding guide)[\s\S]{0,1600}/i);
   return match?.[0].trim();
 }
 
@@ -258,7 +295,11 @@ function cleanLabel(label: string): string {
 }
 
 function looksLikeNutrient(label: string): boolean {
-  return /protein|lysine|methionine|fat|oil|fibre|fiber|starch|sugar|ndf|adf|calcium|phosph|magnesium|potassium|sodium|chloride|copper|zinc|manganese|iron|selenium|iodine|cobalt|vitamin|biotin|choline|omega|ash|moisture|energy|DE|ME|rohprotein|rohfett|rohfaser|rohasche|stärke|zucker|phosphor|natrium|kupfer|zink|mangan|jod|selen/i.test(label);
+  return /protein|lysine|methionine|threonine|leucine|isoleucine|valine|tryptophan|bcaa|fat|oil|fibre|fiber|starch|sugar|esc|wsc|nsc|ndf|adf|calcium|phosph|magnesium|potassium|sodium|salt|chloride|copper|zinc|manganese|iron|selenium|iodine|cobalt|chromium|vitamin|biotin|choline|omega|ash|moisture|energy|DE|ME|kcal|rohprotein|rohfett|rohfaser|rohasche|stärke|zucker|phosphor|natrium|kupfer|zink|mangan|jod|selen/i.test(label);
+}
+
+function isKnownNutrientKey(key: string): boolean {
+  return /^(digestible_energy|metabolisable_energy|crude_protein|lysine|methionine|threonine|leucine|isoleucine|valine|tryptophan|bcaa|fat|oil|fibre|starch|sugar|esc|wsc|nsc|ndf|adf|calcium|phosphorus|magnesium|potassium|sodium|chloride|copper|zinc|manganese|iron|selenium|iodine|cobalt|chromium|vitamin_[a-z0-9]+|biotin|choline|omega_3|omega_6|ash|moisture|dry_matter)$/.test(key);
 }
 
 function addDays(iso: string, days: number): string {

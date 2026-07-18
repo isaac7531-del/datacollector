@@ -75,7 +75,7 @@ export class IngestionEngine {
               if (action === "created") summary.productsCreated += 1;
               else summary.productsUpdated += 1;
               await this.persistOperationalProductState(product, existing);
-              await this.publishProductEvents(product, changedNutrients, availabilityChanged);
+              await this.publishProductEvents(product, changedNutrients, availabilityChanged, action);
             }
           }
         }
@@ -96,9 +96,9 @@ export class IngestionEngine {
     return results;
   }
 
-  private async publishProductEvents(product: FeedProduct, changedNutrients: string[], availabilityChanged: boolean): Promise<void> {
+  private async publishProductEvents(product: FeedProduct, changedNutrients: string[], availabilityChanged: boolean, action: "created" | "updated"): Promise<void> {
     const occurredAt = new Date().toISOString();
-    await this.eventPublisher.publish({ type: "nutrition.product.updated", occurredAt, product });
+    await this.eventPublisher.publish({ type: action === "created" ? "nutrition.product.discovered" : "nutrition.product.updated", occurredAt, product });
     if (product.discontinued || product.availability.discontinued) {
       await this.eventPublisher.publish({ type: "nutrition.product.discontinued", occurredAt, product });
     }
@@ -106,6 +106,7 @@ export class IngestionEngine {
       await this.eventPublisher.publish({ type: "nutrition.formulation.changed", occurredAt, product, changedNutrients });
     }
     if (availabilityChanged) {
+      await this.eventPublisher.publish({ type: "nutrition.availability.changed", occurredAt, product });
       await this.eventPublisher.publish({ type: "nutrition.country_availability.changed", occurredAt, product });
     }
   }

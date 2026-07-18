@@ -22,6 +22,7 @@ export * from "./normalisation/ingredients";
 export * from "./normalisation/nutrients";
 export * from "./normalisation/unitNormalisation";
 export * from "./operations/types";
+export * from "./operations/australiaAcceptanceReport";
 export * from "./parsing/htmlProductParser";
 export * from "./programs/feedingProgramEngine";
 export * from "./recommendations/recommendationEngine";
