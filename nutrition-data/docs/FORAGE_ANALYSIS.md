@@ -17,6 +17,22 @@ Supported data origins:
 - laboratory forage tests;
 - user-entered analyses.
 
+Supported laboratory import profiles:
+
+- Equi-Analytical;
+- Dairy One;
+- CVAS;
+- Eurofins;
+- local forage laboratories.
+
+Supported upload/import forms:
+
+- CSV;
+- TSV;
+- extracted PDF text;
+- plain text;
+- administrator-entered manual rows.
+
 Laboratory values override generic estimates for a ration.
 
 Retained fields:

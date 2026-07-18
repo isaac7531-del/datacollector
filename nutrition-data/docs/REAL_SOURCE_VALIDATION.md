@@ -25,6 +25,18 @@ The final Phase 2 target is:
 
 This commit does not claim those counts are satisfied. It adds the live acquisition framework, source registry and launch connectors needed to collect and validate those counts. Live counts must be produced with `npm run smoke:live` and operational collection jobs in an environment where public HTTP access to each source is allowed.
 
+## Expanded onboarding registry
+
+The source registry now includes a larger administrator-assisted cohort spanning Australia, UK/Ireland, Germany/EU, France, Italy, USA and New Zealand. These targets are tracked so source reconnaissance can proceed systematically, but their products are not verified until connector-specific evidence is collected.
+
+## Forage laboratory support
+
+Forage laboratory import profiles are implemented for Equi-Analytical, Dairy One, CVAS, Eurofins and local forage laboratories. User-uploaded hay analyses can override generic forage assumptions in ration analysis.
+
+## Versioned prices
+
+Public price observations are immutable price versions. Price history analytics can calculate inflation, cheapest region, cost trends, average monthly feed cost and seasonal pricing.
+
 ## Unsupported or deferred sources
 
 Sources that require login, CAPTCHA, blocked client rendering, or unclear terms must be marked administrator-assisted, unavailable or unsupported. Do not use stealth plugins, proxy rotation, fingerprint spoofing or account circumvention.

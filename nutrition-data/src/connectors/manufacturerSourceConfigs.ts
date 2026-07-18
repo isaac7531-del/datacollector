@@ -1,6 +1,6 @@
 import type { ManufacturerSourceConfig, SourceReconnaissance } from "../operations/types";
 
-export const priorityCountryCodes = ["AU", "GB", "IE", "DE", "NZ", "US"] as const;
+export const priorityCountryCodes = ["AU", "GB", "IE", "DE", "FR", "IT", "NZ", "US"] as const;
 
 export const launchManufacturerSourceConfigs: ManufacturerSourceConfig[] = [
   {
@@ -142,6 +142,61 @@ export const launchManufacturerSourceConfigs: ManufacturerSourceConfig[] = [
   }
 ];
 
+export const onboardedManufacturerBacklogConfigs: ManufacturerSourceConfig[] = [
+  cfg("hygain-au", "Hygain", "AU", "https://hygain.com.au", ["AU"], "AUD", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "balancer"], ["https://hygain.com.au/collections/horse-feed"], ["hygain\\.com\\.au/.+"]),
+  cfg("barastoc-au", "Barastoc", "AU", "https://barastochorse.com.au", ["AU"], "AUD", "administrator_assisted", ["feed", "performance_feed", "stud_feed", "youngstock_feed"], ["https://barastochorse.com.au/horse"], ["barastochorse\\.com\\.au/.+"]),
+  cfg("prydes-au", "Pryde's EasiFeed", "AU", "https://www.prydes.com.au", ["AU"], "AUD", "administrator_assisted", ["feed", "performance_feed", "balancer", "breeding_feed"], ["https://www.prydes.com.au/products"], ["prydes\\.com\\.au/.+"]),
+  cfg("coprice-au", "CopRice", "AU", "https://www.coprice.com.au", ["AU"], "AUD", "administrator_assisted", ["feed", "performance_feed", "senior_feed"], ["https://www.coprice.com.au/products/animal/horse"], ["coprice\\.com\\.au/.+"]),
+  cfg("ker-au", "Kentucky Equine Research Australia", "AU", "https://ker.com/equinews/region/australia", ["AU"], "AUD", "administrator_assisted", ["supplement", "vitamin_mineral_supplement", "electrolyte", "oil"].map(categoryAlias), ["https://ker.com/equinews/region/australia"], ["ker\\.com/.+"]),
+  cfg("ranvet-au", "Ranvet", "AU", "https://www.ranvet.com.au", ["AU"], "AUD", "administrator_assisted", ["supplement", "electrolyte", "joint_supplement", "digestive_supplement"].map(categoryAlias), ["https://www.ranvet.com.au/products"], ["ranvet\\.com\\.au/.+"]),
+  cfg("kelato-au", "Kelato Animal Health", "AU", "https://kelato.com.au", ["AU"], "AUD", "administrator_assisted", ["supplement", "digestive_supplement", "electrolyte", "hoof_supplement"].map(categoryAlias), ["https://kelato.com.au/collections/equine"], ["kelato\\.com\\.au/.+"]),
+  cfg("poseidon-au", "Poseidon Animal Health", "AU", "https://poseidonanimalhealth.com.au", ["AU"], "AUD", "administrator_assisted", ["supplement", "digestive_supplement", "vitamin_mineral_supplement"].map(categoryAlias), ["https://poseidonanimalhealth.com.au/collections/equine"], ["poseidonanimalhealth\\.com\\.au/.+"]),
+  cfg("cen-au", "CEN Nutrition", "AU", "https://cennutrition.com.au", ["AU"], "AUD", "administrator_assisted", ["feed", "supplement", "oil", "omega_product"].map(categoryAlias), ["https://cennutrition.com.au/collections/equine"], ["cennutrition\\.com\\.au/.+"]),
+
+  cfg("saracen-gb", "Saracen Horse Feeds", "GB", "https://www.saracenhorsefeeds.com", ["GB", "IE"], "GBP", "administrator_assisted", ["feed", "performance_feed", "stud_feed", "balancer"], ["https://www.saracenhorsefeeds.com/products"], ["saracenhorsefeeds\\.com/.+"]),
+  cfg("baileys-gb", "Baileys Horse Feeds", "GB", "https://www.baileyshorsefeeds.co.uk", ["GB", "IE"], "GBP", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "balancer"], ["https://www.baileyshorsefeeds.co.uk/products"], ["baileyshorsefeeds\\.co\\.uk/.+"]),
+  cfg("spillers-gb", "Spillers", "GB", "https://www.spillers-feeds.com", ["GB", "IE"], "GBP", "administrator_assisted", ["feed", "balancer", "senior_feed", "youngstock_feed"], ["https://www.spillers-feeds.com/products"], ["spillers-feeds\\.com/.+"]),
+  cfg("allen-page-gb", "Allen & Page", "GB", "https://www.allenandpage.com", ["GB", "IE"], "GBP", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "balancer"], ["https://www.allenandpage.com/horse-feed"], ["allenandpage\\.com/.+"]),
+  cfg("topspec-gb", "TopSpec", "GB", "https://www.topspec.com", ["GB", "IE"], "GBP", "administrator_assisted", ["balancer", "supplement", "feed"].map(categoryAlias), ["https://www.topspec.com/products"], ["topspec\\.com/.+"]),
+  cfg("blue-chip-gb", "Blue Chip Feed", "GB", "https://www.bluechipfeed.com", ["GB", "IE"], "GBP", "administrator_assisted", ["balancer", "feed", "supplement"].map(categoryAlias), ["https://www.bluechipfeed.com/products"], ["bluechipfeed\\.com/.+"]),
+  cfg("equine-america-gb", "Equine America UK", "GB", "https://www.equine-america.co.uk", ["GB", "IE"], "GBP", "administrator_assisted", ["supplement", "joint_supplement", "digestive_supplement", "electrolyte"].map(categoryAlias), ["https://www.equine-america.co.uk/products"], ["equine-america\\.co\\.uk/.+"]),
+  cfg("naf-gb", "NAF", "GB", "https://www.naf-equine.eu", ["GB", "IE"], "GBP", "administrator_assisted", ["supplement", "joint_supplement", "digestive_supplement", "hoof_supplement"].map(categoryAlias), ["https://www.naf-equine.eu/uk/products"], ["naf-equine\\.eu/.+"]),
+  cfg("science-supplements-gb", "Science Supplements", "GB", "https://sciencesupplements.co.uk", ["GB", "IE"], "GBP", "administrator_assisted", ["supplement", "joint_supplement", "digestive_supplement", "muscle_supplement"].map(categoryAlias), ["https://sciencesupplements.co.uk/collections/equine"], ["sciencesupplements\\.co\\.uk/.+"]),
+  cfg("thunderbrook-gb", "Thunderbrook", "GB", "https://www.thunderbrook.co.uk", ["GB", "IE"], "GBP", "administrator_assisted", ["feed", "balancer", "supplement", "forage"].map(categoryAlias), ["https://www.thunderbrook.co.uk/products"], ["thunderbrook\\.co\\.uk/.+"]),
+  cfg("forageplus-gb", "ForagePlus", "GB", "https://forageplus.co.uk", ["GB", "IE"], "GBP", "administrator_assisted", ["supplement", "vitamin_mineral_supplement", "forage"].map(categoryAlias), ["https://forageplus.co.uk/shop"], ["forageplus\\.co\\.uk/.+"]),
+
+  cfg("agrobs-de", "Agrobs", "DE", "https://www.agrobs.de", ["DE", "AT"], "EUR", "administrator_assisted", ["forage", "feed", "balancer", "treat"], ["https://www.agrobs.de/pferdefutter"], ["agrobs\\.de/.+"]),
+  cfg("marstall-de", "Marstall", "DE", "https://www.marstall.eu", ["DE", "AT"], "EUR", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "balancer"], ["https://www.marstall.eu/pferdefutter"], ["marstall\\.eu/.+"]),
+  cfg("hoeveler-de", "Höveler", "DE", "https://www.hoeveler.com", ["DE"], "EUR", "administrator_assisted", ["feed", "performance_feed", "balancer", "supplement"].map(categoryAlias), ["https://www.hoeveler.com/pferdefutter"], ["hoeveler\\.com/.+"]),
+  cfg("eggersmann-de", "Eggersmann", "DE", "https://www.eggersmann-shop.de", ["DE"], "EUR", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "balancer"], ["https://www.eggersmann-shop.de/pferdefutter"], ["eggersmann-shop\\.de/.+"]),
+  cfg("josera-de", "Josera", "DE", "https://www.josera.de", ["DE"], "EUR", "administrator_assisted", ["feed", "balancer", "mineral_block"], ["https://www.josera.de/pferd"], ["josera\\.de/.+"]),
+  cfg("derby-de", "Derby", "DE", "https://www.derby.de", ["DE"], "EUR", "administrator_assisted", ["feed", "performance_feed", "balancer", "supplement"].map(categoryAlias), ["https://www.derby.de/pferdefutter"], ["derby\\.de/.+"]),
+  cfg("pavo-eu", "Pavo", "DE", "https://www.pavo-horses.com", ["DE", "NL", "BE", "FR"], "EUR", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "balancer"], ["https://www.pavo-horses.com/products"], ["pavo-horses\\.com/.+"]),
+
+  cfg("reverdy-fr", "Reverdy", "FR", "https://www.reverdy.fr", ["FR"], "EUR", "administrator_assisted", ["feed", "performance_feed", "balancer", "supplement"].map(categoryAlias), ["https://www.reverdy.fr/fr/boutique"], ["reverdy\\.fr/.+"]),
+  cfg("lambey-fr", "Lambey", "FR", "https://www.lambey.com", ["FR"], "EUR", "administrator_assisted", ["feed", "performance_feed", "breeding_feed", "supplement"].map(categoryAlias), ["https://www.lambey.com/aliments-chevaux"], ["lambey\\.com/.+"]),
+  cfg("dynavena-fr", "Dynavena", "FR", "https://www.dynavena.com", ["FR"], "EUR", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "balancer"], ["https://www.dynavena.com/aliments-chevaux"], ["dynavena\\.com/.+"]),
+
+  cfg("equiplanet-it", "Equiplanet", "IT", "https://www.equiplanet.it", ["IT"], "EUR", "administrator_assisted", ["feed", "supplement", "forage"].map(categoryAlias), ["https://www.equiplanet.it"], ["equiplanet\\.it/.+"]),
+  cfg("fioccato-it", "Fioccato", "IT", "https://www.fioccato.com", ["IT"], "EUR", "administrator_assisted", ["feed", "performance_feed", "breeding_feed"], ["https://www.fioccato.com"], ["fioccato\\.com/.+"]),
+
+  cfg("purina-us", "Purina Animal Nutrition", "US", "https://www.purinamills.com", ["US"], "USD", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "balancer"], ["https://www.purinamills.com/horse-feed"], ["purinamills\\.com/.+"]),
+  cfg("nutrena-us", "Nutrena", "US", "https://www.nutrenaworld.com", ["US"], "USD", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "youngstock_feed"], ["https://www.nutrenaworld.com/horse-feed"], ["nutrenaworld\\.com/.+"]),
+  cfg("tribute-us", "Tribute Equine Nutrition", "US", "https://tributeequinenutrition.com", ["US"], "USD", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "balancer"], ["https://tributeequinenutrition.com/products"], ["tributeequinenutrition\\.com/.+"]),
+  cfg("seminole-us", "Seminole Feed", "US", "https://seminolefeed.com", ["US"], "USD", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "balancer"], ["https://seminolefeed.com/products"], ["seminolefeed\\.com/.+"]),
+  cfg("buckeye-us", "Buckeye Nutrition", "US", "https://www.buckeyenutrition.com", ["US"], "USD", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "balancer"], ["https://www.buckeyenutrition.com/products"], ["buckeyenutrition\\.com/.+"]),
+  cfg("progressive-nutrition-us", "Progressive Nutrition", "US", "https://www.prognutrition.com", ["US"], "USD", "administrator_assisted", ["feed", "balancer", "vitamin_mineral_supplement"], ["https://www.prognutrition.com/products"], ["prognutrition\\.com/.+"]),
+  cfg("smartpak-us", "SmartPak Supplements", "US", "https://www.smartpakequine.com", ["US"], "USD", "administrator_assisted", ["supplement", "joint_supplement", "digestive_supplement", "hoof_supplement"].map(categoryAlias), ["https://www.smartpakequine.com/equine-supplements"], ["smartpakequine\\.com/.+"]),
+
+  cfg("fiber-fresh-nz", "Fiber Fresh", "NZ", "https://fiber-fresh.com", ["NZ", "AU"], "NZD", "administrator_assisted", ["forage", "feed", "chaff"], ["https://fiber-fresh.com/products"], ["fiber-fresh\\.com/.+"]),
+  cfg("nrm-nz", "NRM", "NZ", "https://nrm.co.nz", ["NZ"], "NZD", "administrator_assisted", ["feed", "performance_feed", "breeding_feed", "youngstock_feed"], ["https://nrm.co.nz/products/equine"], ["nrm\\.co\\.nz/.+"])
+];
+
+export const onboardedManufacturerSourceConfigs: ManufacturerSourceConfig[] = [
+  ...launchManufacturerSourceConfigs,
+  ...onboardedManufacturerBacklogConfigs
+];
+
 export const manufacturerTargetReconnaissance: SourceReconnaissance[] = [
   matrix("Mitavite", "AU", "https://mitavite.com/collections/feeds", "Shopify collection with product pages", "19+ feeds visible on collection", "excellent", "all_products", "most_products", "AU product catalogue and state-level notes on some products", "Not required for primary feed pages", "static_html", "Shopify product URLs and possible sitemap", "Robots fetch timed out in this environment; collect only after live robots check.", "fully_automated", "p0", "Launch connector implemented."),
   matrix("Pryde's EasiFeed", "AU", "https://www.prydes.com.au", "Product catalogue pages", "20+", "good", "partial", "partial", "Australia-focused", "Possible PDFs", "mixed", "Unknown", "Requires reconnaissance before implementation.", "administrator_assisted", "p1", "Backlog source."),
@@ -200,4 +255,39 @@ function matrix(
     implementationPriority,
     notes
   };
+}
+
+function cfg(
+  id: string,
+  manufacturerName: string,
+  headquartersCountry: string,
+  website: string,
+  countries: string[],
+  defaultCurrency: string,
+  acquisitionMode: ManufacturerSourceConfig["acquisitionMode"],
+  productCategories: ManufacturerSourceConfig["productCategories"],
+  catalogueUrls: string[],
+  productUrlPatterns: string[]
+): ManufacturerSourceConfig {
+  return {
+    id,
+    manufacturerName,
+    headquartersCountry,
+    website,
+    countriesMarketed: countries,
+    countriesOfficiallyDistributed: countries,
+    defaultCurrency,
+    acquisitionMode,
+    collectionMethod: acquisitionMode === "document_assisted" ? "public_pdf" : "public_page",
+    productCategories,
+    catalogueUrls,
+    productUrlPatterns,
+    expectedRefreshDays: 30,
+    termsNotes: "Onboarded target. Run source reconnaissance and robots check before enabling fully automated collection."
+  };
+}
+
+function categoryAlias(category: string): ManufacturerSourceConfig["productCategories"][number] {
+  if (category === "supplement") return "vitamin_mineral_supplement";
+  return category as ManufacturerSourceConfig["productCategories"][number];
 }
