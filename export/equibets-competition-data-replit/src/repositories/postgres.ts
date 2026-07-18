@@ -44,6 +44,11 @@ export class PostgresCompetitionDataRepository implements CompetitionDataReposit
 
   constructor(options: PostgresRepositoryOptions) {
     this.pool = options.pool ?? new Pool({ connectionString: options.connectionString, ...options.poolConfig });
+    this.pool.on("error", (error: unknown) => {
+      const code = (error as { code?: string }).code;
+      if (code === "57P01") return;
+      process.emitWarning(error instanceof Error ? error : new Error(String(error)));
+    });
   }
 
   async healthCheck(): Promise<void> {
@@ -214,11 +219,112 @@ export class PostgresCompetitionDataRepository implements CompetitionDataReposit
   }
 
   async appendEvent(event: CompetitionDataEvent): Promise<void> {
-    await this.upsertJson("competition_data_event_outbox", event.id, event);
+    await this.pool.query(
+      `INSERT INTO competition_data_event_outbox (id, payload, status, retry_count, next_attempt_at, error_history, idempotency_key, schema_version)
+       VALUES ($1, $2, 'pending', 0, NOW(), '[]'::jsonb, $3, $4)
+       ON CONFLICT (id) DO NOTHING`,
+      [event.id, JSON.stringify(event), `${event.type}:${event.id}`, event.version]
+    );
   }
 
   async listEvents(): Promise<CompetitionDataEvent[]> {
     return this.listJson<CompetitionDataEvent>("competition_data_event_outbox");
+  }
+
+  async listOutboxEvents(status?: string): Promise<Array<{ id: string; payload: CompetitionDataEvent; status: string; retryCount: number }>> {
+    const result = await this.pool.query(
+      `SELECT id, payload, status, retry_count FROM competition_data_event_outbox
+       WHERE ($1::text IS NULL OR status = $1)
+       ORDER BY created_at ASC`,
+      [status ?? null]
+    );
+    return result.rows.map((row) => ({ id: row.id, payload: row.payload, status: row.status, retryCount: row.retry_count }));
+  }
+
+  async markOutboxDelivered(id: string): Promise<void> {
+    await this.pool.query("UPDATE competition_data_event_outbox SET status = 'delivered', delivered_at = NOW(), updated_at = NOW() WHERE id = $1", [id]);
+  }
+
+  async markOutboxFailed(id: string, error: string, deadLetter = false): Promise<void> {
+    await this.pool.query(
+      `UPDATE competition_data_event_outbox
+       SET status = $2,
+           retry_count = retry_count + 1,
+           next_attempt_at = NOW() + INTERVAL '1 minute',
+           error_history = error_history || $3::jsonb,
+           dead_lettered_at = CASE WHEN $2 = 'dead_letter' THEN NOW() ELSE dead_lettered_at END,
+           updated_at = NOW()
+       WHERE id = $1`,
+      [id, deadLetter ? "dead_letter" : "pending", JSON.stringify([{ at: new Date().toISOString(), error }])]
+    );
+  }
+
+  async saveConfiguration(id: string, payload: unknown): Promise<void> {
+    await this.upsertJson("competition_data_configuration", id, payload);
+  }
+
+  async getConfiguration<T = unknown>(id: string): Promise<T | undefined> {
+    return this.getJson<T>("competition_data_configuration", id);
+  }
+
+  async listConfigurations<T = unknown>(): Promise<Array<{ id: string; payload: T }>> {
+    const result = await this.pool.query("SELECT id, payload FROM competition_data_configuration ORDER BY id");
+    return result.rows.map((row) => ({ id: row.id, payload: row.payload as T }));
+  }
+
+  async saveMappingProfile(id: string, payload: unknown, enabled = false): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO competition_data_mapping_profiles (id, version, enabled, payload)
+       VALUES ($1, 1, $2, $3)
+       ON CONFLICT (id) DO UPDATE
+       SET version = competition_data_mapping_profiles.version + 1,
+           enabled = EXCLUDED.enabled,
+           payload = EXCLUDED.payload,
+           updated_at = NOW()`,
+      [id, enabled, JSON.stringify(payload)]
+    );
+  }
+
+  async getMappingProfile<T = unknown>(id: string): Promise<T | undefined> {
+    const result = await this.pool.query("SELECT payload FROM competition_data_mapping_profiles WHERE id = $1", [id]);
+    return result.rows[0]?.payload as T | undefined;
+  }
+
+  async listMappingProfiles<T = unknown>(): Promise<Array<{ id: string; payload: T; enabled: boolean; version: number }>> {
+    const result = await this.pool.query("SELECT id, payload, enabled, version FROM competition_data_mapping_profiles ORDER BY id");
+    return result.rows.map((row) => ({ id: row.id, payload: row.payload as T, enabled: row.enabled, version: row.version }));
+  }
+
+  async saveRollbackAudit(id: string, importRunId: string, plan: unknown, status: string, confirmation?: string): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO competition_data_rollback_audit (id, import_run_id, plan, status, confirmation, applied_at)
+       VALUES ($1, $2, $3, $4, $5, CASE WHEN $4 = 'applied' THEN NOW() ELSE NULL END)
+       ON CONFLICT (id) DO UPDATE SET plan = EXCLUDED.plan, status = EXCLUDED.status, confirmation = EXCLUDED.confirmation, applied_at = EXCLUDED.applied_at`,
+      [id, importRunId, JSON.stringify(plan), status, confirmation]
+    );
+  }
+
+  async listTableNames(): Promise<string[]> {
+    const result = await this.pool.query(
+      "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name LIKE 'competition_data_%' ORDER BY table_name"
+    );
+    return result.rows.map((row) => row.table_name);
+  }
+
+  async listIndexNames(): Promise<string[]> {
+    const result = await this.pool.query("SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND indexname LIKE 'idx_competition_data_%' ORDER BY indexname");
+    return result.rows.map((row) => row.indexname);
+  }
+
+  async listCanonicalRecords(entityType?: string): Promise<unknown[]> {
+    const result = await this.pool.query(
+      `SELECT payload FROM competition_data_canonical_records
+       WHERE ($1::text IS NULL OR entity_type = $1)
+       ORDER BY created_at ASC
+       LIMIT 500`,
+      [entityType ?? null]
+    );
+    return result.rows.map((row) => row.payload);
   }
 
   private async findCandidates<TEntity>(entityType: EntityType, search: CandidateSearch<TEntity>): Promise<Array<EntityCandidate<TEntity>>> {

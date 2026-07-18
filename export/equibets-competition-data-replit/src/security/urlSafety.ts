@@ -4,6 +4,7 @@ import { isIP } from "net";
 export interface UrlSafetyOptions {
   allowedProtocols?: string[];
   blockedHosts?: string[];
+  allowedHosts?: string[];
 }
 
 const DEFAULT_BLOCKED_HOSTS = new Set([
@@ -20,6 +21,10 @@ export async function assertSafePublicUrl(urlString: string, options: UrlSafetyO
   }
 
   const hostname = url.hostname.toLocaleLowerCase("en");
+  const allowedHosts = options.allowedHosts?.map((host) => host.toLocaleLowerCase("en"));
+  if (allowedHosts?.length && !allowedHosts.includes(hostname)) {
+    throw new Error(`Public import host is not allowlisted: ${hostname}`);
+  }
   const blockedHosts = new Set([...DEFAULT_BLOCKED_HOSTS, ...(options.blockedHosts ?? []).map((host) => host.toLocaleLowerCase("en"))]);
   if (blockedHosts.has(hostname)) {
     throw new Error(`Blocked public import host: ${hostname}`);

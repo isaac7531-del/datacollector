@@ -90,7 +90,18 @@ npm run reprocess:failed
 npm run reprocess:unresolved
 npm run provisional:recheck
 npm run worker
+npm run worker:outbox
 npm run demo
+npm run migrate
+npm run migrate:rollback
+npm run seed
+npm run test:postgres
+npm run test:consumer
+npm run mapping:inspect -- --path ./tests/fixtures/eventing-results.csv
+npm run mapping:preview -- --path ./tests/fixtures/eventing-results.csv --profile ./profile.json
+npm run mapping:test -- --path ./tests/fixtures/eventing-results.csv --profile ./profile.json
+npm run import:rollback-plan -- --import-id <import-run-id>
+npm run import:rollback -- --import-id <import-run-id> --confirm <import-run-id>
 ```
 
 ## Package layout
@@ -163,7 +174,9 @@ Replit should provide implementations for:
 - FEI assisted import for supplied exports/downloads.
 - Staging, validation, normalization, entity resolution, reconciliation and provenance.
 - In-memory and PostgreSQL repository adapters.
-- Runnable HTTP API, CLI, worker and demo.
+- Embedded PostgreSQL operational tests.
+- Runnable HTTP API, CLI, worker, outbox worker and demo.
+- Mapping-profile, seed, migration and rollback commands.
 
 ## Assisted/manual
 

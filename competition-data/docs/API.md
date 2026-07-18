@@ -6,6 +6,7 @@ The runnable API is created with `createCompetitionDataApiServer`.
 
 - `GET /health`
 - `GET /ready`
+- `GET /metrics`
 
 ## Connectors
 
@@ -24,6 +25,7 @@ The runnable API is created with `createCompetitionDataApiServer`.
 - `GET /imports`
 - `GET /imports/:id`
 - `POST /imports/:id/retry`
+- `GET /imports/:id/rollback-plan`
 - `POST /imports/:id/rollback`
 
 `/imports/file` currently accepts JSON bodies containing file content. Replit can wrap this endpoint with its existing multipart upload middleware.
@@ -72,6 +74,8 @@ The in-memory repository can serve basic read responses for demo/testing. Produc
 
 - Authentication is provided through `AuthAdapter`.
 - Role authorization is delegated to the adapter.
+- Mutation endpoints require authentication by default.
 - Responses include `x-correlation-id`.
 - JSON request size is limited by `COMPETITION_DATA_BODY_LIMIT_BYTES`.
 - Basic in-process rate limiting is included; production deployments can replace it at the edge.
+- Metrics exposure is configurable; protect it in production unless it is only available on an internal network.

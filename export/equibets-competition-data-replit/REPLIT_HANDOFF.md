@@ -18,6 +18,11 @@ It includes:
 - scheduler lock service;
 - versioned downstream events;
 - synthetic eventing fixtures and demo.
+- embedded PostgreSQL operational validation tests;
+- transactional outbox worker;
+- mapping profile CLI;
+- seed command;
+- rollback planning boundary.
 
 ## What is working
 
@@ -29,8 +34,10 @@ It includes:
 - Manual imports through the same pipeline.
 - FEI assisted import from supplied public downloads/exports.
 - PostgreSQL repository implementation, migrations and health-check test path.
+- PostgreSQL migration, rollback, lock, idempotency and persistence tests using disposable embedded PostgreSQL.
 - HTTP health/readiness/connectors/import/staging/resolution/conflict/manual/data boundaries.
 - CLI commands and worker entrypoint.
+- Outbox worker entrypoint.
 - Synthetic end-to-end demo.
 
 ## Framework-only or integration-required
@@ -122,9 +129,17 @@ npm test
 npm run build
 npm run start
 npm run worker
+npm run worker:outbox
 npm run demo
 npm run connector:list
 npm run connector:health
+npm run seed
+npm run migrate
+npm run migrate:rollback
+npm run test:postgres
+npm run test:consumer
+npm run mapping:inspect -- --path ./tests/fixtures/eventing-results.csv
+npm run mapping:test -- --path ./tests/fixtures/eventing-results.csv --profile ./examples/mapping-profile.eventing-csv.json
 npm run import:file -- --path ./tests/fixtures/eventing-results.csv --connector generic-csv
 npm run import:url -- --url https://example.org/results.csv --connector public-file
 ```

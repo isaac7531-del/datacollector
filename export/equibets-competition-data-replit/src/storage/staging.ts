@@ -60,7 +60,18 @@ export class StagingService {
 }
 
 export function fingerprintPayload(payload: unknown): string {
-  return createHash("sha256").update(stableStringify(payload)).digest("hex");
+  return createHash("sha256").update(stableStringify(stripVolatileFields(payload))).digest("hex");
+}
+
+function stripVolatileFields(value: unknown): unknown {
+  if (value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) return value.map(stripVolatileFields);
+  const volatileKeys = new Set(["fetchedAt", "importedAt", "createdAt", "updatedAt", "lastSeenAt", "lastChangedAt"]);
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => !volatileKeys.has(key))
+      .map(([key, nested]) => [key, stripVolatileFields(nested)])
+  );
 }
 
 function stableStringify(value: unknown): string {

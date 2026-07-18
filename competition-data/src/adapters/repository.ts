@@ -70,6 +70,13 @@ export interface CompetitionDataRepository {
   releaseSchedulerLock?(lockId: string): Promise<void>;
   appendEvent?(event: CompetitionDataEvent): Promise<void>;
   listEvents?(): Promise<CompetitionDataEvent[]>;
+  saveConfiguration?(id: string, payload: unknown): Promise<void>;
+  getConfiguration?<T = unknown>(id: string): Promise<T | undefined>;
+  listConfigurations?<T = unknown>(): Promise<Array<{ id: string; payload: T }>>;
+  saveMappingProfile?(id: string, payload: unknown, enabled?: boolean): Promise<void>;
+  getMappingProfile?<T = unknown>(id: string): Promise<T | undefined>;
+  listMappingProfiles?<T = unknown>(): Promise<Array<{ id: string; payload: T; enabled: boolean; version: number }>>;
+  saveRollbackAudit?(id: string, importRunId: string, plan: unknown, status: string, confirmation?: string): Promise<void>;
 }
 
 export class InMemoryCompetitionDataRepository implements CompetitionDataRepository {
@@ -88,6 +95,9 @@ export class InMemoryCompetitionDataRepository implements CompetitionDataReposit
   readonly connectorHealth: ConnectorHealth[] = [];
   readonly schedulerLocks: SchedulerLock[] = [];
   readonly outboxEvents: CompetitionDataEvent[] = [];
+  readonly configurations = new Map<string, unknown>();
+  readonly mappingProfiles = new Map<string, { payload: unknown; enabled: boolean; version: number }>();
+  readonly rollbackAudits: Array<{ id: string; importRunId: string; plan: unknown; status: string; confirmation?: string }> = [];
 
   constructor(seed: Partial<Pick<InMemoryCompetitionDataRepository, "competitions" | "events" | "horses" | "riders" | "results" | "entries" | "rankings">> = {}) {
     this.competitions.push(...(seed.competitions ?? []));
@@ -283,6 +293,40 @@ export class InMemoryCompetitionDataRepository implements CompetitionDataReposit
 
   async listEvents(): Promise<CompetitionDataEvent[]> {
     return [...this.outboxEvents];
+  }
+
+  async saveConfiguration(id: string, payload: unknown): Promise<void> {
+    this.configurations.set(id, payload);
+  }
+
+  async getConfiguration<T = unknown>(id: string): Promise<T | undefined> {
+    return this.configurations.get(id) as T | undefined;
+  }
+
+  async listConfigurations<T = unknown>(): Promise<Array<{ id: string; payload: T }>> {
+    return Array.from(this.configurations.entries()).map(([id, payload]) => ({ id, payload: payload as T }));
+  }
+
+  async saveMappingProfile(id: string, payload: unknown, enabled = false): Promise<void> {
+    const existing = this.mappingProfiles.get(id);
+    this.mappingProfiles.set(id, { payload, enabled, version: existing ? existing.version + 1 : 1 });
+  }
+
+  async getMappingProfile<T = unknown>(id: string): Promise<T | undefined> {
+    return this.mappingProfiles.get(id)?.payload as T | undefined;
+  }
+
+  async listMappingProfiles<T = unknown>(): Promise<Array<{ id: string; payload: T; enabled: boolean; version: number }>> {
+    return Array.from(this.mappingProfiles.entries()).map(([id, profile]) => ({
+      id,
+      payload: profile.payload as T,
+      enabled: profile.enabled,
+      version: profile.version
+    }));
+  }
+
+  async saveRollbackAudit(id: string, importRunId: string, plan: unknown, status: string, confirmation?: string): Promise<void> {
+    this.rollbackAudits.push({ id, importRunId, plan, status, confirmation });
   }
 }
 

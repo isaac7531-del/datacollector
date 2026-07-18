@@ -23,14 +23,13 @@ The adapter uses JSONB payload columns plus indexes for common lookup fields. Th
 Run:
 
 ```bash
-psql "$DATABASE_URL" -f migrations/001_competition_data_engine.sql
-psql "$DATABASE_URL" -f migrations/002_postgres_engine_storage.sql
+npm run migrate
 ```
 
-Rollback for migration 002:
+Rollback additive storage/operational migrations:
 
 ```bash
-psql "$DATABASE_URL" -f migrations/002_postgres_engine_storage.rollback.sql
+npm run migrate:rollback
 ```
 
 Review production data before rollback.
@@ -47,4 +46,15 @@ If the main EquiBets app uses Prisma, Drizzle, Kysely or another ORM:
 
 ## PostgreSQL tests
 
-`npm run test:postgres` runs a health-check test when `DATABASE_URL` is set. Without `DATABASE_URL`, the test documents that database setup is required and passes as a skipped-environment check.
+`npm run test:postgres` starts a disposable embedded PostgreSQL server when `DATABASE_URL` is not set. When `DATABASE_URL` is set, use it to test the target database.
+
+The test suite covers:
+
+- forward migrations;
+- table/index verification;
+- repository health;
+- full import/stage/reconcile/persist/API query flow;
+- transaction rollback;
+- scheduler locks;
+- idempotent reruns;
+- rollback migration and reapply in a separate disposable database.

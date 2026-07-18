@@ -28,6 +28,7 @@ export interface PublicFileUrlConnectorOptions {
   cacheTtlMs?: number;
   userAgent?: string;
   allowedContentTypes?: string[];
+  allowedHosts?: string[];
 }
 
 interface CacheEntry {
@@ -102,7 +103,7 @@ export function createPublicFileUrlConnector(options: PublicFileUrlConnectorOpti
 }
 
 export async function fetchPublicFile(urlString: string, options: PublicFileUrlConnectorOptions): Promise<{ body: Buffer; contentType: string }> {
-  let current = await assertSafePublicUrl(urlString);
+  let current = await assertSafePublicUrl(urlString, { allowedHosts: options.allowedHosts });
   const redirectLimit = options.redirectLimit ?? 3;
   const retryPolicy = options.retryPolicy ?? { maxAttempts: 2, initialDelayMs: 250, maxDelayMs: 2_000, backoffMultiplier: 2 };
   let lastError: unknown;
@@ -112,7 +113,7 @@ export async function fetchPublicFile(urlString: string, options: PublicFileUrlC
       for (let redirect = 0; redirect <= redirectLimit; redirect += 1) {
         const response = await fetchWithTimeout(current, options);
         if (response.status >= 300 && response.status < 400 && response.headers.get("location")) {
-          current = await assertSafePublicUrl(new URL(response.headers.get("location") ?? "", current).toString());
+          current = await assertSafePublicUrl(new URL(response.headers.get("location") ?? "", current).toString(), { allowedHosts: options.allowedHosts });
           continue;
         }
 
@@ -180,7 +181,8 @@ async function fetchWithTimeout(url: URL, options: PublicFileUrlConnectorOptions
       redirect: "manual",
       signal: controller.signal,
       headers: {
-        "user-agent": options.userAgent ?? "EquiBetsCompetitionDataEngine/0.1.0 (+public-file-import)"
+        "user-agent": options.userAgent ?? "EquiBetsCompetitionDataEngine/0.1.0 (+public-file-import)",
+        "accept-encoding": "identity"
       }
     });
   } finally {

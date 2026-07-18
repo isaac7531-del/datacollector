@@ -43,5 +43,5 @@ export async function runWorker(options: WorkerOptions = {}): Promise<void> {
 }
 
 if (require.main === module) {
-  void runWorker();
+  void runWorker({ once: process.env.COMPETITION_DATA_WORKER_ONCE === "true" });
 }

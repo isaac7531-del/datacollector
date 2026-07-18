@@ -6,6 +6,7 @@ import { ApiKeyAuthAdapter, type AuthAdapter } from "../auth/auth";
 import { createCsvResultsConnector } from "../connectors/csvResultsConnector";
 import { createPublicFileUrlConnector } from "../connectors/publicFileUrlConnector";
 import type { DataSource, ManualEntrySubmission } from "../domain/types";
+import { RollbackService } from "../rollback/rollbackService";
 import type { CompetitionDataEngine } from "../service/CompetitionDataEngine";
 
 export interface CompetitionDataApiServerOptions {
@@ -15,6 +16,8 @@ export interface CompetitionDataApiServerOptions {
   logger?: Logger;
   bodyLimitBytes?: number;
   rateLimit?: { requests: number; windowMs: number };
+  cors?: { origin: string };
+  exposeMetricsWithoutAuth?: boolean;
 }
 
 interface RequestContext {
@@ -59,8 +62,18 @@ export function createCompetitionDataApiServer(options: CompetitionDataApiServer
       correlationId: request.headers["x-correlation-id"]?.toString() ?? `corr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
     };
     response.setHeader("x-correlation-id", context.correlationId);
+    if (options.cors?.origin) {
+      response.setHeader("access-control-allow-origin", options.cors.origin);
+      response.setHeader("access-control-allow-headers", "authorization,content-type,x-correlation-id");
+      response.setHeader("access-control-allow-methods", "GET,POST,PATCH,OPTIONS");
+    }
 
     try {
+      if (request.method === "OPTIONS") {
+        response.statusCode = 204;
+        response.end();
+        return;
+      }
       if (!limiter(request.socket.remoteAddress ?? "unknown")) {
         sendJson(response, 429, { error: "rate_limited", correlationId: context.correlationId });
         return;
@@ -82,6 +95,12 @@ export function createCompetitionDataApiServer(options: CompetitionDataApiServer
           ? await healthRepository.healthCheck().then(() => true, () => false)
           : true;
         sendJson(response, ready ? 200 : 503, { ready, correlationId: context.correlationId });
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/metrics") {
+        if (!options.exposeMetricsWithoutAuth && !(await auth.authorize(principal, "metrics:read"))) return forbidden(response, context);
+        sendText(response, 200, await renderMetrics(options.repository));
         return;
       }
 
@@ -163,8 +182,13 @@ export function createCompetitionDataApiServer(options: CompetitionDataApiServer
 
       if (pathParts[0] === "imports" && pathParts[1]) {
         const importId = decodeURIComponent(pathParts[1]);
-        if (request.method === "GET") {
+        if (request.method === "GET" && pathParts.length === 2) {
           sendJson(response, 200, (await options.repository.getImportRun?.(importId)) ?? { error: "not_found" });
+          return;
+        }
+        if (request.method === "GET" && pathParts[2] === "rollback-plan") {
+          if (!(await auth.authorize(principal, "imports:rollback-plan"))) return forbidden(response, context);
+          sendJson(response, 200, await new RollbackService(options.repository).plan(importId));
           return;
         }
         if (request.method === "POST" && pathParts[2] === "retry") {
@@ -174,7 +198,8 @@ export function createCompetitionDataApiServer(options: CompetitionDataApiServer
         }
         if (request.method === "POST" && pathParts[2] === "rollback") {
           if (!(await auth.authorize(principal, "imports:rollback"))) return forbidden(response, context);
-          sendJson(response, 202, { accepted: true, importId, action: "rollback", safeRollback: "requires repository-specific implementation" });
+          const body = await readJsonBody<{ confirm?: string }>(request, options.bodyLimitBytes);
+          sendJson(response, 202, await new RollbackService(options.repository).apply(importId, body.confirm ?? ""));
           return;
         }
       }
@@ -226,7 +251,7 @@ export function createCompetitionDataApiServer(options: CompetitionDataApiServer
       }
 
       if (request.method === "GET" && ["events", "horses", "riders", "results", "combinations"].includes(pathParts[0] ?? "")) {
-        sendJson(response, 200, readInMemoryData(options.repository, pathParts));
+        sendJson(response, 200, await readRepositoryData(options.repository, pathParts));
         return;
       }
 
@@ -303,6 +328,12 @@ function sendJson(response: ServerResponse, statusCode: number, body: unknown): 
   response.end(JSON.stringify(body));
 }
 
+function sendText(response: ServerResponse, statusCode: number, body: string): void {
+  response.statusCode = statusCode;
+  response.setHeader("content-type", "text/plain; charset=utf-8");
+  response.end(body);
+}
+
 function forbidden(response: ServerResponse, context: RequestContext): void {
   sendJson(response, 403, { error: "forbidden", correlationId: context.correlationId });
 }
@@ -330,7 +361,22 @@ function createRateLimiter(config: { requests: number; windowMs: number }) {
   };
 }
 
-function readInMemoryData(repository: CompetitionDataRepository, pathParts: string[]) {
+async function readRepositoryData(repository: CompetitionDataRepository, pathParts: string[]) {
+  const postgres = repository as unknown as {
+    listCanonicalRecords?: (entityType?: string) => Promise<unknown[]>;
+  };
+  if (typeof postgres.listCanonicalRecords === "function") {
+    const entityType = pathParts[0] === "events" ? "event" : pathParts[0]?.replace(/s$/, "");
+    const records = await postgres.listCanonicalRecords(entityType);
+    if (pathParts[1] && pathParts[2] === "results") {
+      return { items: records.filter((result) => JSON.stringify(result).includes(pathParts[1] ?? "")) };
+    }
+    if (pathParts[1]) {
+      return records.find((item) => (item as { id?: string }).id === pathParts[1]) ?? { error: "not_found" };
+    }
+    return { items: records };
+  }
+
   const record = repository as unknown as Record<string, unknown[]>;
   const collection = pathParts[0] === "events" ? record.events : record[pathParts[0] ?? ""];
   if (!Array.isArray(collection)) return { items: [] };
@@ -341,4 +387,25 @@ function readInMemoryData(repository: CompetitionDataRepository, pathParts: stri
     return collection.find((item) => (item as { id?: string }).id === pathParts[1]) ?? { error: "not_found" };
   }
   return { items: collection };
+}
+
+async function renderMetrics(repository: CompetitionDataRepository): Promise<string> {
+  const imports = (await repository.listImportRuns?.()) ?? [];
+  const staged = (await repository.listStagedRecords?.()) ?? [];
+  const conflicts = (await repository.listConflicts?.()) ?? [];
+  const events = (await repository.listEvents?.()) ?? [];
+  return [
+    "# HELP competition_data_import_runs_total Import runs recorded",
+    "# TYPE competition_data_import_runs_total gauge",
+    `competition_data_import_runs_total ${imports.length}`,
+    "# HELP competition_data_staged_records_total Staged records recorded",
+    "# TYPE competition_data_staged_records_total gauge",
+    `competition_data_staged_records_total ${staged.length}`,
+    "# HELP competition_data_conflicts_total Conflicts recorded",
+    "# TYPE competition_data_conflicts_total gauge",
+    `competition_data_conflicts_total ${conflicts.length}`,
+    "# HELP competition_data_outbox_events_total Outbox events recorded",
+    "# TYPE competition_data_outbox_events_total gauge",
+    `competition_data_outbox_events_total ${events.length}`
+  ].join("\n");
 }

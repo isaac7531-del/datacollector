@@ -27,7 +27,7 @@ This document reports the current state of `@equibets/competition-data` after th
 
 - Already-normalized graph objects work through the pass-through normalizer.
 - CSV works with configurable delimiter, aliases, mapping, decimal format, event metadata and row-level validation.
-- `.xlsx` works with sheet/header options through `exceljs`.
+- `.xlsx` works with sheet/header options through `read-excel-file`.
 - JSON works through documented source-neutral schema version `1.0`.
 - XML works through source-neutral XML mapped to schema version `1.0`.
 - Public URL imports work for safe public HTTP/HTTPS file URLs with SSRF protection, redirect limits, content limits, retries and caching.

@@ -16,7 +16,7 @@ export class ApiKeyAuthAdapter implements AuthAdapter {
 
   async authenticate(request: IncomingMessage): Promise<AuthenticatedPrincipal | undefined> {
     if (!this.apiKey) {
-      return { id: "anonymous-dev", roles: [this.adminRole] };
+      return undefined;
     }
 
     if (request.headers.authorization === `Bearer ${this.apiKey}`) {
@@ -28,5 +28,21 @@ export class ApiKeyAuthAdapter implements AuthAdapter {
 
   async authorize(principal: AuthenticatedPrincipal | undefined, _action: string): Promise<boolean> {
     return !!principal?.roles.includes(this.adminRole);
+  }
+}
+
+export class DevelopmentAuthAdapter implements AuthAdapter {
+  constructor(private readonly enabled = process.env.NODE_ENV !== "production") {
+    if (!this.enabled) {
+      throw new Error("DevelopmentAuthAdapter cannot be enabled in production.");
+    }
+  }
+
+  async authenticate(): Promise<AuthenticatedPrincipal> {
+    return { id: "development-user", roles: ["competition-data-admin"], tenantId: "development" };
+  }
+
+  async authorize(): Promise<boolean> {
+    return true;
   }
 }

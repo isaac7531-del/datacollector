@@ -13,13 +13,18 @@ Steps:
    - `competition-data/docs/API.md`
    - `competition-data/docs/CONNECTORS.md`
    - `competition-data/docs/DATABASE.md`
+   - `competition-data/docs/OPERATIONAL_READINESS.md`
+   - `competition-data/docs/REAL_SOURCE_VALIDATION.md`
+   - `competition-data/docs/REPLIT_RUNTIME.md`
+   - `competition-data/docs/REPLIT_INTEGRATION_CONTRACT.md`
    - `competition-data/REPLIT_HANDOFF.md`
 3. Install the package by copying it as a workspace package, installing a local archive, using the private Git repository, or a private registry later. Do not require public npm publication.
 4. Connect PostgreSQL:
    - Either run the supplied migrations and use `createPostgresRepositories`, or
    - implement `CompetitionDataRepository` with the existing ORM (Prisma, Drizzle, Kysely or other).
 5. Preserve tenant isolation in all repository methods.
-6. Connect authentication and role authorization using `AuthAdapter`.
+6. Run `npm run migrate` and `npm run seed`.
+7. Connect authentication and role authorization using `AuthAdapter`.
 7. Connect the Data Operations Centre to import runs, staged records and connector health.
 8. Connect the Resolution Centre to resolution candidates and conflicts.
 9. Connect Import History and Undo Imports to import runs, staged records and repository-specific rollback.
@@ -30,11 +35,17 @@ Steps:
 14. Preserve private Stable Manager information. Public imports must never overwrite private notes, health records, treatments, attachments, private training records, nutrition records or private owner communication.
 15. Register real connectors only after confirming source terms and testing with source-owned public files or exports.
 16. Keep direct FEI page automation disabled where FEI blocks automated server access. Use assisted imports and uploaded/direct public FEI exports.
-17. Run:
+17. Configure workers:
+   - API: `npm run start`
+   - import worker: `npm run worker`
+   - outbox worker: `npm run worker:outbox`
+18. Run:
    - `npm run typecheck`
    - `npm run lint`
    - `npm test`
+   - `npm run test:postgres`
+   - `npm run test:consumer`
    - `npm run build`
    - `npm run demo`
-18. Report changed files and any required manual Replit settings.
-19. Clearly separate fully automated workflows, assisted workflows, manual workflows and unsupported workflows.
+19. Report changed files and any required manual Replit settings.
+20. Clearly separate fully automated workflows, assisted workflows, manual workflows and unsupported workflows.

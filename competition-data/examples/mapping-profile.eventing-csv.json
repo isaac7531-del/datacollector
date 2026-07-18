@@ -1,0 +1,41 @@
+{
+  "id": "eventing-csv-example",
+  "version": 1,
+  "name": "Eventing CSV Example",
+  "enabled": false,
+  "fileFormat": "csv",
+  "headerRow": 1,
+  "delimiter": ",",
+  "dateFormat": "YYYY-MM-DD",
+  "decimalFormat": "dot",
+  "statusMappings": {
+    "placed": "placed",
+    "eliminated": "eliminated",
+    "withdrawn": "withdrawn"
+  },
+  "classMappings": {
+    "CCN2*-S": "eventing-national-2-star-short",
+    "EvA95": "eventing-95"
+  },
+  "mapping": {
+    "competitionName": "event_name",
+    "startDate": "start_date",
+    "countryCode": "country",
+    "venue": "venue",
+    "className": "class_name",
+    "startNumber": "start_number",
+    "horseName": "horse_name",
+    "horseId": "horse_reg",
+    "riderName": "rider_name",
+    "riderId": "rider_member",
+    "dressageScore": "dressage_score",
+    "crossCountryJumpingPenalties": "xc_jump_pen",
+    "crossCountryTimePenalties": "xc_time_pen",
+    "showjumpingJumpingPenalties": "sj_jump_pen",
+    "showjumpingTimePenalties": "sj_time_pen",
+    "finalScore": "final_score",
+    "finalPlacing": "final_place",
+    "resultStatus": "status",
+    "publicationStatus": "publication_status"
+  }
+}

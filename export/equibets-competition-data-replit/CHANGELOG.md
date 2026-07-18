@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.2.0
+
+### Operational readiness
+
+- Added operational readiness audit.
+- Added embedded PostgreSQL integration tests that run without Docker.
+- Added forward/rollback migration runner commands.
+- Added idempotent seed command.
+- Added mapping profile schema and CLI workflow.
+- Added rollback planning/apply service plus HTTP and CLI boundaries.
+- Added provisional result lifecycle service.
+- Added transactional outbox delivery metadata and outbox worker.
+- Hardened API authentication defaults and added metrics endpoint.
+- Hardened public URL import with allowlist support and identity encoding requests.
+- Added operational entity resolver with match reasons, thresholds, rejected-match memory and deterministic-ID conflict protection.
+- Added Replit runtime and integration contract documentation.
+- Added partial real-source validation documentation and tiny transformed BDWP sample fixture.
+
+### Validation changes
+
+- `npm run test:postgres` now starts disposable embedded PostgreSQL when `DATABASE_URL` is not supplied instead of silently skipping.
+- Added consumer integration test command.
+
 ## 0.1.0
 
 ### Initial architecture

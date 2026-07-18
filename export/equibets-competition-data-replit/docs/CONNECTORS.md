@@ -32,7 +32,7 @@ Supports uploaded or local CSV content, configurable delimiter, encoding, decima
 
 `createExcelResultsConnector`
 
-Supports `.xlsx` files using `exceljs`, sheet selection, header-row selection, configurable mappings, preview, validation, and the same normalized pipeline as CSV.
+Supports `.xlsx` files using `read-excel-file`, sheet selection, header-row selection, configurable mappings, preview, validation, and the same normalized pipeline as CSV.
 
 Legacy `.xls` is not enabled because the package avoids the vulnerable `xlsx` parser. Add `.xls` only if Replit selects a safe parser.
 
