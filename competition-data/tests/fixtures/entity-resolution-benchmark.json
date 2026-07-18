@@ -1,0 +1,37 @@
+[
+  {
+    "label": "exact horse FEI match",
+    "entityType": "horse",
+    "incoming": { "externalIds": [{ "sourceSystem": "fei", "sourceId": "H100" }], "name": "Étoile du Matin", "yearOfBirth": 2014 },
+    "candidate": { "externalIds": [{ "sourceSystem": "fei", "sourceId": "H100" }], "name": "Etoile Du Matin", "yearOfBirth": 2014 },
+    "expected": "update"
+  },
+  {
+    "label": "same horse name different birth year",
+    "entityType": "horse",
+    "incoming": { "externalIds": [{ "sourceSystem": "national", "sourceId": "A1" }], "name": "Blue Star", "yearOfBirth": 2012 },
+    "candidate": { "externalIds": [{ "sourceSystem": "national", "sourceId": "B2" }], "name": "Blue Star", "yearOfBirth": 2018 },
+    "expected": "review"
+  },
+  {
+    "label": "rider punctuation and case",
+    "entityType": "rider",
+    "incoming": { "externalIds": [], "displayName": "Anne-Marie O'Neill", "countryCode": "AUS" },
+    "candidate": { "externalIds": [], "displayName": "anne marie oneill", "countryCode": "AU" },
+    "expected": "review"
+  },
+  {
+    "label": "conflicting FEI IDs",
+    "entityType": "horse",
+    "incoming": { "externalIds": [{ "sourceSystem": "fei", "sourceId": "H200" }], "name": "Same Name" },
+    "candidate": { "externalIds": [{ "sourceSystem": "fei", "sourceId": "H201" }], "name": "Same Name" },
+    "expected": "review"
+  },
+  {
+    "label": "low confidence duplicate names",
+    "entityType": "rider",
+    "incoming": { "externalIds": [], "displayName": "John Smith", "countryCode": "US" },
+    "candidate": { "externalIds": [], "displayName": "John Smith", "countryCode": "GB" },
+    "expected": "create"
+  }
+]

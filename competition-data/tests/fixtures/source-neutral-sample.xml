@@ -1,0 +1,19 @@
+<competitionData>
+  <source id="synthetic-xml-provider" name="Synthetic XML Provider" kind="event_organiser" mode="official_export" countryCode="AU" official="true" sourceUrl="https://example.invalid/results.xml" />
+  <competitions>
+    <competition id="xml-event-1" name="Synthetic XML Horse Trials" status="completed" discipline="eventing" startDate="2026-06-01" endDate="2026-06-02" countryCode="AU" venue="XML Park">
+      <classes>
+        <class id="xml-class-1" name="EvA95" discipline="eventing" />
+      </classes>
+      <horses>
+        <horse id="xml-horse-1" name="XML Star" />
+      </horses>
+      <riders>
+        <rider id="xml-rider-1" displayName="XML Rider" />
+      </riders>
+      <results>
+        <result id="xml-result-1" horseName="XML Star" riderName="XML Rider" finalScore="29.7" finalPlacing="1" status="placed" publicationStatus="final" />
+      </results>
+    </competition>
+  </competitions>
+</competitionData>

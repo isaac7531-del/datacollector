@@ -1,0 +1,12 @@
+event_name,start_date,country,venue,class_name,horse_name,horse_reg,rider_name,rider_member,start_number,dressage_score,xc_jump_pen,xc_time_pen,sj_jump_pen,sj_time_pen,final_score,final_place,status,publication_status
+Synthetic Three Day Event,2026-04-01,AU,Synthetic Park,CCN2*-S,Southern Star,H-1001,Ava Martin,R-2001,11,28.4,0,1.2,0,0,29.6,1,placed,final
+Synthetic Three Day Event,2026-04-01,AU,Synthetic Park,CCN2*-S,River Echo,H-1002,Noah Clarke,R-2002,12,30.1,0,0,4,0,34.1,2,placed,final
+Synthetic Three Day Event,2026-04-01,AU,Synthetic Park,CCN2*-S,Blue Comet,H-1003,Mia Chen,R-2003,13,31.2,0,2.4,4,0,37.6,3,placed,final
+Synthetic Three Day Event,2026-04-01,AU,Synthetic Park,CCN2*-S,Willow Way,,Lucas Brown,R-2004,14,34.9,20,8.8,0,0,63.7,4,placed,final
+Synthetic Three Day Event,2026-04-01,AU,Synthetic Park,CCN2*-S,Gold Finch,H-1005,Isla Wilson,,15,36.2,0,0,8,1.2,45.4,5,placed,final
+Synthetic Three Day Event,2026-04-01,AU,Synthetic Park,EvA95,Harbour Light,H-1006,Jack Taylor,R-2006,21,32.0,0,0,0,0,32.0,1,placed,final
+Synthetic Three Day Event,2026-04-01,AU,Synthetic Park,EvA95,Cloud Atlas,H-1007,Grace Lee,R-2007,22,33.5,0,3.6,4,0,41.1,2,placed,final
+Synthetic Three Day Event,2026-04-01,AU,Synthetic Park,EvA95,Red Jasper,H-1008,Ethan White,R-2008,23,35.0,0,0,0,0,35.0,,withdrawn,final
+Synthetic Three Day Event,2026-04-01,AU,Synthetic Park,EvA95,Silver Arrow,H-1009,Olivia Hall,R-2009,24,29.9,20,0,0,0,49.9,,eliminated,final
+Synthetic Three Day Event,2026-04-01,AU,Synthetic Park,EvA95,North Wind,H-1010,Liam Scott,R-2010,25,31.0,0,0,4,0,35.0,3,placed,provisional
+Synthetic Three Day Event,2026-04-01,AU,Synthetic Park,EvA95,North Wind,H-1010,Liam Scott,R-2010,25,31.0,0,0,0,0,31.0,1,placed,corrected

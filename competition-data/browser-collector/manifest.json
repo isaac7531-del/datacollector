@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "EquiBets FEI Browser-Assisted Collector",
+  "version": "0.1.0",
+  "description": "Human-controlled collector for FEI pages already visible in the user's normal browser session.",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["https://data.fei.org/*"],
+  "action": {
+    "default_popup": "status.html",
+    "default_title": "EquiBets FEI Collector"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://data.fei.org/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
