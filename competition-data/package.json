@@ -25,6 +25,11 @@
     "start": "tsx src/http/start.ts",
     "dev": "tsx watch src/http/start.ts",
     "worker": "tsx src/workers/worker.ts",
+    "worker:discovery": "tsx src/workers/sourceWorker.ts discovery",
+    "worker:collection": "tsx src/workers/sourceWorker.ts collection",
+    "worker:processing": "tsx src/workers/sourceWorker.ts processing",
+    "worker:provisional": "tsx src/workers/sourceWorker.ts provisional",
+    "worker:backfill": "tsx src/workers/sourceWorker.ts backfill",
     "worker:outbox": "tsx src/workers/outboxWorker.ts",
     "outbox:retry": "tsx src/cli/cli.ts outbox:retry",
     "outbox:dead-letter": "tsx src/cli/cli.ts outbox:dead-letter",
@@ -32,6 +37,15 @@
     "cli": "tsx src/cli/cli.ts",
     "connector:list": "tsx src/cli/cli.ts connector:list",
     "connector:health": "tsx src/cli/cli.ts connector:health",
+    "source:list": "tsx src/cli/cli.ts source:list",
+    "source:health": "tsx src/cli/cli.ts source:health",
+    "source:discover": "tsx src/cli/cli.ts source:discover",
+    "source:collect-event": "tsx src/cli/cli.ts source:collect-event",
+    "source:smoke": "tsx src/cli/cli.ts source:smoke",
+    "backfill:plan": "tsx src/cli/cli.ts backfill:plan",
+    "backfill:start": "tsx src/cli/cli.ts backfill:start",
+    "backfill:pause": "tsx src/cli/cli.ts backfill:pause",
+    "backfill:resume": "tsx src/cli/cli.ts backfill:resume",
     "import:file": "tsx src/cli/cli.ts import:file",
     "import:url": "tsx src/cli/cli.ts import:url",
     "backfill": "tsx src/cli/cli.ts backfill",
@@ -47,7 +61,9 @@
     "mapping:export": "tsx src/cli/cli.ts mapping:export",
     "mapping:import": "tsx src/cli/cli.ts mapping:import",
     "import:rollback-plan": "tsx src/cli/cli.ts import:rollback-plan",
-    "import:rollback": "tsx src/cli/cli.ts import:rollback"
+    "import:rollback": "tsx src/cli/cli.ts import:rollback",
+    "browser-collector:build": "node browser-collector/build.js",
+    "browser-collector:test": "vitest run tests/browser-collector"
   },
   "keywords": [
     "equibets",
@@ -60,6 +76,7 @@
   "dependencies": {
     "commander": "^15.0.0",
     "fast-xml-parser": "^5.10.1",
+    "pdf-parse": "^2.4.5",
     "pg": "^8.22.0",
     "read-excel-file": "^9.3.2",
     "zod": "^4.4.3"

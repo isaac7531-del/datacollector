@@ -19,6 +19,7 @@ import type {
   SchedulerLock,
   StagedRecord
 } from "../domain/records";
+import type { BackfillPlan, SourceEventCheckpoint, SourceHealthSummary } from "../domain/acquisition";
 import type { CompetitionDataEvent } from "../events/events";
 import { compactIdentifier, dateOnly, normaliseSearchText } from "../domain/normaliseText";
 
@@ -77,6 +78,14 @@ export interface CompetitionDataRepository {
   getMappingProfile?<T = unknown>(id: string): Promise<T | undefined>;
   listMappingProfiles?<T = unknown>(): Promise<Array<{ id: string; payload: T; enabled: boolean; version: number }>>;
   saveRollbackAudit?(id: string, importRunId: string, plan: unknown, status: string, confirmation?: string): Promise<void>;
+  saveSourceEventCheckpoint?(checkpoint: SourceEventCheckpoint): Promise<void>;
+  listSourceEventCheckpoints?(filter?: { source?: string; state?: string }): Promise<SourceEventCheckpoint[]>;
+  getSourceEventCheckpoint?(id: string): Promise<SourceEventCheckpoint | undefined>;
+  saveSourceHealthSummary?(summary: SourceHealthSummary): Promise<void>;
+  getSourceHealthSummary?(source: string): Promise<SourceHealthSummary | undefined>;
+  saveBackfillPlan?(plan: BackfillPlan): Promise<void>;
+  getBackfillPlan?(id: string): Promise<BackfillPlan | undefined>;
+  listBackfillPlans?(source?: string): Promise<BackfillPlan[]>;
 }
 
 export class InMemoryCompetitionDataRepository implements CompetitionDataRepository {
@@ -98,6 +107,9 @@ export class InMemoryCompetitionDataRepository implements CompetitionDataReposit
   readonly configurations = new Map<string, unknown>();
   readonly mappingProfiles = new Map<string, { payload: unknown; enabled: boolean; version: number }>();
   readonly rollbackAudits: Array<{ id: string; importRunId: string; plan: unknown; status: string; confirmation?: string }> = [];
+  readonly sourceEventCheckpoints: SourceEventCheckpoint[] = [];
+  readonly sourceHealthSummaries = new Map<string, SourceHealthSummary>();
+  readonly backfillPlans: BackfillPlan[] = [];
 
   constructor(seed: Partial<Pick<InMemoryCompetitionDataRepository, "competitions" | "events" | "horses" | "riders" | "results" | "entries" | "rankings">> = {}) {
     this.competitions.push(...(seed.competitions ?? []));
@@ -327,6 +339,42 @@ export class InMemoryCompetitionDataRepository implements CompetitionDataReposit
 
   async saveRollbackAudit(id: string, importRunId: string, plan: unknown, status: string, confirmation?: string): Promise<void> {
     this.rollbackAudits.push({ id, importRunId, plan, status, confirmation });
+  }
+
+  async saveSourceEventCheckpoint(checkpoint: SourceEventCheckpoint): Promise<void> {
+    upsertById(this.sourceEventCheckpoints, checkpoint);
+  }
+
+  async listSourceEventCheckpoints(filter: { source?: string; state?: string } = {}): Promise<SourceEventCheckpoint[]> {
+    return this.sourceEventCheckpoints.filter((checkpoint) => {
+      if (filter.source && checkpoint.source !== filter.source) return false;
+      if (filter.state && checkpoint.currentState !== filter.state) return false;
+      return true;
+    });
+  }
+
+  async getSourceEventCheckpoint(id: string): Promise<SourceEventCheckpoint | undefined> {
+    return this.sourceEventCheckpoints.find((checkpoint) => checkpoint.id === id);
+  }
+
+  async saveSourceHealthSummary(summary: SourceHealthSummary): Promise<void> {
+    this.sourceHealthSummaries.set(summary.source, summary);
+  }
+
+  async getSourceHealthSummary(source: string): Promise<SourceHealthSummary | undefined> {
+    return this.sourceHealthSummaries.get(source);
+  }
+
+  async saveBackfillPlan(plan: BackfillPlan): Promise<void> {
+    upsertById(this.backfillPlans, plan);
+  }
+
+  async getBackfillPlan(id: string): Promise<BackfillPlan | undefined> {
+    return this.backfillPlans.find((plan) => plan.id === id);
+  }
+
+  async listBackfillPlans(source?: string): Promise<BackfillPlan[]> {
+    return this.backfillPlans.filter((plan) => !source || plan.source === source);
   }
 }
 

@@ -3,7 +3,9 @@ import { Command } from "commander";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { join } from "path";
 import { createCliEngine } from "./engineFactory";
+import { createSourceEngine, sourceIdFromCli } from "./sourceFactory";
 import { inspectMappingFile, mappingProfileSchema, previewWithMapping, testMappingProfile } from "../mapping/mappingProfile";
+import type { BackfillPlan } from "../domain/acquisition";
 
 const program = new Command();
 
@@ -125,6 +127,73 @@ program.command("outbox:retry").description("Mark pending outbox records for ret
 program.command("outbox:dead-letter").description("Inspect dead-letter outbox records through repository tooling").action(() => {
   console.log(JSON.stringify({ accepted: true, action: "outbox:dead-letter", note: "Use PostgreSQL repository listOutboxEvents('dead_letter') in production." }, null, 2));
 });
+
+program.command("source:list").description("List live acquisition sources").action(() => {
+  const { engine } = createSourceEngine();
+  console.log(JSON.stringify(engine.listConnectors().map((connector) => ({
+    id: connector.id,
+    name: connector.name,
+    acquisitionMode: connector.acquisitionMode,
+    automationLevel: connector.automationLevel,
+    sourceHealthStatus: connector.sourceHealthStatus,
+    accessLimitation: connector.accessLimitation
+  })), null, 2));
+});
+
+program.command("source:health").option("--source <source>", "Source id").description("Check live source health").action(async (options) => {
+  const { engine } = createSourceEngine();
+  const connectors = options.source ? [sourceIdFromCli(options.source)] : engine.listConnectors().map((connector) => connector.id);
+  const health = [];
+  for (const connectorId of connectors) health.push(await engine.connectorHealth(connectorId));
+  console.log(JSON.stringify(health, null, 2));
+});
+
+program.command("source:discover").requiredOption("--source <source>", "Source id").option("--url <url>", "Specific source URL").description("Discover events from a live source").action(async (options) => {
+  const { engine } = createSourceEngine();
+  const connectorId = sourceIdFromCli(options.source);
+  const items = await engine.discover({ sourceIds: options.url ? [options.url] : undefined }, [connectorId]);
+  console.log(JSON.stringify(items, null, 2));
+});
+
+program.command("source:collect-event").requiredOption("--source <source>", "Source id").requiredOption("--event-id <eventId>", "Event id or URL").description("Collect one source event").action(async (options) => {
+  const { engine } = createSourceEngine();
+  const connectorId = sourceIdFromCli(options.source);
+  const items = await engine.discover({ sourceIds: options.eventId.startsWith("http") ? [options.eventId] : undefined }, [connectorId]);
+  const item = items.find((candidate) => candidate.id === options.eventId || candidate.url === options.eventId) ?? items[0];
+  if (!item) throw new Error(`No event found for ${options.eventId}`);
+  const summary = await engine.runConnector(connectorId, { discovery: { sourceIds: [item.url ?? options.eventId] }, triggerType: "cli" });
+  console.log(JSON.stringify(summary, null, 2));
+});
+
+program.command("source:smoke").requiredOption("--source <source>", "Source id").description("Run a small live source smoke test").action(async (options) => {
+  const { engine } = createSourceEngine();
+  const connectorId = sourceIdFromCli(options.source);
+  const summary = await engine.runConnector(connectorId, { triggerType: "cli", dryRun: true });
+  console.log(JSON.stringify({ source: connectorId, smoke: "completed", summary }, null, 2));
+});
+
+program.command("backfill:plan").requiredOption("--source <source>", "Source id").requiredOption("--from <from>", "From date").requiredOption("--to <to>", "To date").option("--dry-run", "Dry run", true).description("Create a controlled backfill plan").action((options) => {
+  const plan: BackfillPlan = {
+    id: `plan-${sourceIdFromCli(options.source)}-${options.from}-${options.to}`,
+    source: sourceIdFromCli(options.source),
+    fromDate: options.from,
+    toDate: options.to,
+    concurrency: 1,
+    requestsPerMinute: 10,
+    dryRun: options.dryRun !== false,
+    estimatedEvents: 10,
+    estimatedDocuments: 50,
+    estimatedStorageBytes: 25 * 1024 * 1024,
+    status: "planned"
+  };
+  console.log(JSON.stringify(plan, null, 2));
+});
+
+for (const command of ["backfill:start", "backfill:pause", "backfill:resume"]) {
+  program.command(command).requiredOption("--plan-id <planId>", "Backfill plan id").action((options) => {
+    console.log(JSON.stringify({ accepted: true, action: command, planId: options.planId }, null, 2));
+  });
+}
 
 program.command("worker").description("Start the worker").action(async () => {
   await import("../workers/worker");

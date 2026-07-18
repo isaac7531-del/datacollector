@@ -24,6 +24,7 @@ import type {
   SchedulerLock,
   StagedRecord
 } from "../domain/records";
+import type { BackfillPlan, SourceEventCheckpoint, SourceHealthSummary } from "../domain/acquisition";
 import type { CompetitionDataEvent } from "../events/events";
 import { normaliseSearchText } from "../domain/normaliseText";
 
@@ -314,6 +315,44 @@ export class PostgresCompetitionDataRepository implements CompetitionDataReposit
   async listIndexNames(): Promise<string[]> {
     const result = await this.pool.query("SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND indexname LIKE 'idx_competition_data_%' ORDER BY indexname");
     return result.rows.map((row) => row.indexname);
+  }
+
+  async saveSourceEventCheckpoint(checkpoint: SourceEventCheckpoint): Promise<void> {
+    await this.upsertJson("competition_data_source_event_checkpoints", checkpoint.id, checkpoint);
+  }
+
+  async listSourceEventCheckpoints(filter: { source?: string; state?: string } = {}): Promise<SourceEventCheckpoint[]> {
+    const records = await this.listJson<SourceEventCheckpoint>("competition_data_source_event_checkpoints");
+    return records.filter((record) => {
+      if (filter.source && record.source !== filter.source) return false;
+      if (filter.state && record.currentState !== filter.state) return false;
+      return true;
+    });
+  }
+
+  async getSourceEventCheckpoint(id: string): Promise<SourceEventCheckpoint | undefined> {
+    return this.getJson<SourceEventCheckpoint>("competition_data_source_event_checkpoints", id);
+  }
+
+  async saveSourceHealthSummary(summary: SourceHealthSummary): Promise<void> {
+    await this.upsertJson("competition_data_source_health", summary.source, summary);
+  }
+
+  async getSourceHealthSummary(source: string): Promise<SourceHealthSummary | undefined> {
+    return this.getJson<SourceHealthSummary>("competition_data_source_health", source);
+  }
+
+  async saveBackfillPlan(plan: BackfillPlan): Promise<void> {
+    await this.upsertJson("competition_data_backfill_plans", plan.id, plan);
+  }
+
+  async getBackfillPlan(id: string): Promise<BackfillPlan | undefined> {
+    return this.getJson<BackfillPlan>("competition_data_backfill_plans", id);
+  }
+
+  async listBackfillPlans(source?: string): Promise<BackfillPlan[]> {
+    const plans = await this.listJson<BackfillPlan>("competition_data_backfill_plans");
+    return plans.filter((plan) => !source || plan.source === source);
   }
 
   async listCanonicalRecords(entityType?: string): Promise<unknown[]> {

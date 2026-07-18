@@ -6,10 +6,12 @@ import { Pool } from "pg";
 const forwardMigrations = [
   "001_competition_data_engine.sql",
   "002_postgres_engine_storage.sql",
-  "003_operational_readiness.sql"
+  "003_operational_readiness.sql",
+  "004_live_acquisition.sql"
 ];
 
 const rollbackMigrations = [
+  "004_live_acquisition.rollback.sql",
   "003_operational_readiness.rollback.sql",
   "002_postgres_engine_storage.rollback.sql"
 ];

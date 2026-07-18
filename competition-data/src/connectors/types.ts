@@ -29,6 +29,8 @@ export type ConnectorCapability =
   | "stage";
 
 export type SourceAuthority = "official" | "verified" | "public" | "user_confirmed" | "user_unverified" | "unknown";
+export type AcquisitionMode = "server" | "browser" | "browser-assisted" | "file" | "administrator-assisted" | "disabled";
+export type AutomationLevel = "fully_automated" | "browser_automated" | "browser_assisted" | "file_assisted" | "administrator_assisted" | "unsupported";
 
 export interface RetryPolicy {
   maxAttempts: number;
@@ -54,6 +56,13 @@ export interface ConnectorDescriptor {
   supportedRecordTypes?: Array<"event" | "class" | "entry" | "result" | "phase_result" | "ranking" | "horse" | "rider">;
   sourceAuthority?: SourceAuthority;
   collectionMethod?: "api" | "feed" | "export" | "file" | "page" | "upload" | "manual";
+  acquisitionMode?: AcquisitionMode;
+  automationLevel?: AutomationLevel;
+  lastSuccessfulDiscovery?: string;
+  lastSuccessfulCollection?: string;
+  accessLimitation?: string;
+  requiredUserAction?: string;
+  sourceHealthStatus?: ConnectorHealth["status"];
   publicSourceUrlPattern?: string;
   checkFrequencyMs?: number;
   rateLimit?: RateLimitPolicy;
