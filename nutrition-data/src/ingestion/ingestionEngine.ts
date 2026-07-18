@@ -49,7 +49,18 @@ export class IngestionEngine {
       const items = await connector.discover(options.discovery ?? {});
       summary.discovered += items.length;
       for (const item of items) {
-        const payloads = await connector.fetch(item);
+        let payloads;
+        try {
+          payloads = await connector.fetch(item);
+        } catch (error) {
+          summary.issues.push({
+            code: "fetch_failed",
+            message: error instanceof Error ? error.message : String(error),
+            severity: "warning",
+            source: item.source
+          });
+          continue;
+        }
         summary.payloads += payloads.length;
         for (const payload of payloads) {
           const normalized = await connector.normalise(payload);

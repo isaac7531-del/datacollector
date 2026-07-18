@@ -150,6 +150,30 @@ export const launchManufacturerSourceConfigs: ManufacturerSourceConfig[] = [
     termsNotes: "Robots.txt allows wildcard crawling and declares sitemap."
   },
   {
+    id: "baileys-gb",
+    manufacturerName: "Baileys Horse Feeds",
+    headquartersCountry: "GB",
+    website: "https://www.baileyshorsefeeds.co.uk",
+    countriesMarketed: ["GB", "IE"],
+    countriesOfficiallyDistributed: ["GB", "IE"],
+    defaultCurrency: "GBP",
+    acquisitionMode: "fully_automated",
+    collectionMethod: "public_page",
+    productCategories: ["feed", "performance_feed", "senior_feed", "balancer", "breeding_feed"],
+    catalogueUrls: ["https://www.baileyshorsefeeds.co.uk/products"],
+    productUrlPatterns: ["baileyshorsefeeds\\.co\\.uk/products/"],
+    excludeProductUrlPatterns: ["feed-finder", "library", "stockist", "programme"],
+    fallbackProductUrls: [
+      "https://www.baileyshorsefeeds.co.uk/products/high-fibre-complete",
+      "https://www.baileyshorsefeeds.co.uk/products/no19-performance-balancer",
+      "https://www.baileyshorsefeeds.co.uk/products/no-9-all-round-competition-mix",
+      "https://www.baileyshorsefeeds.co.uk/products/stud-range/prep-mix",
+      "https://www.baileyshorsefeeds.co.uk/products/no-26-senior-soft-lite"
+    ],
+    expectedRefreshDays: 30,
+    termsNotes: "Public product pages expose analytical constituents, ingredients and package/scoop guidance."
+  },
+  {
     id: "dodson-horrell-gb",
     manufacturerName: "Dodson & Horrell",
     headquartersCountry: "GB",
@@ -172,6 +196,76 @@ export const launchManufacturerSourceConfigs: ManufacturerSourceConfig[] = [
     documentUrlPatterns: ["\\.pdf$"],
     expectedRefreshDays: 30,
     termsNotes: "Many technical sheets are public PDFs; document-assisted parser required."
+  },
+  {
+    id: "saracen-gb",
+    manufacturerName: "Saracen Horse Feeds",
+    headquartersCountry: "GB",
+    website: "https://saracenhorsefeeds.com",
+    countriesMarketed: ["GB", "IE"],
+    countriesOfficiallyDistributed: ["GB", "IE"],
+    defaultCurrency: "GBP",
+    acquisitionMode: "fully_automated",
+    collectionMethod: "public_page",
+    productCategories: ["feed", "performance_feed", "balancer", "senior_feed", "breeding_feed"],
+    catalogueUrls: ["https://saracenhorsefeeds.com/products/essential-balancer"],
+    sitemapUrls: ["https://saracenhorsefeeds.com/sitemap.xml"],
+    productUrlPatterns: ["saracenhorsefeeds\\.com/products/"],
+    excludeProductUrlPatterns: ["-test$", "wsc-test", "nir-test", "dietary-minerals-test"],
+    fallbackProductUrls: [
+      "https://saracenhorsefeeds.com/products/essential-balancer",
+      "https://saracenhorsefeeds.com/products/competition-fit-mix",
+      "https://saracenhorsefeeds.com/products/shape-up",
+      "https://saracenhorsefeeds.com/products/condition-improver-mix"
+    ],
+    expectedRefreshDays: 30,
+    termsNotes: "Public product pages expose Nutrient Specification sections."
+  },
+  {
+    id: "allen-page-gb",
+    manufacturerName: "Allen & Page",
+    headquartersCountry: "GB",
+    website: "https://www.allenandpage.com",
+    countriesMarketed: ["GB", "IE"],
+    countriesOfficiallyDistributed: ["GB", "IE"],
+    defaultCurrency: "GBP",
+    acquisitionMode: "fully_automated",
+    collectionMethod: "public_page",
+    productCategories: ["feed", "mash", "senior_feed", "performance_feed"].map(categoryAlias),
+    catalogueUrls: ["https://www.allenandpage.com/product/cool-collected/"],
+    sitemapUrls: ["https://www.allenandpage.com/sitemap_index.xml"],
+    productUrlPatterns: ["allenandpage\\.com/product/"],
+    fallbackProductUrls: [
+      "https://www.allenandpage.com/product/cool-collected/",
+      "https://www.allenandpage.com/product/compete-condition/",
+      "https://www.allenandpage.com/product/fast-fibre/",
+      "https://www.allenandpage.com/product/veteran-vitality/"
+    ],
+    expectedRefreshDays: 30,
+    termsNotes: "Robots requests crawl-delay. Product pages expose ingredients and feeding directions; nutrient tables can be layout-dependent."
+  },
+  {
+    id: "keyflow-gb",
+    manufacturerName: "Keyflow",
+    headquartersCountry: "GB",
+    website: "https://keyflowfeeds.co.uk",
+    countriesMarketed: ["GB", "IE"],
+    countriesOfficiallyDistributed: ["GB", "IE"],
+    defaultCurrency: "GBP",
+    acquisitionMode: "fully_automated",
+    collectionMethod: "public_page",
+    productCategories: ["feed", "performance_feed", "balancer", "breeding_feed"],
+    catalogueUrls: ["https://keyflowfeeds.co.uk/products/keyflow-perfect-balance-l-and-w"],
+    productUrlPatterns: ["keyflowfeeds\\.co\\.uk/products/"],
+    fallbackProductUrls: [
+      "https://keyflowfeeds.co.uk/products/keyflow-perfect-balance-l-and-w",
+      "https://keyflowfeeds.co.uk/products/keyflow-blacktype-prime",
+      "https://keyflowfeeds.co.uk/products/keyflow-nurture-pro-s-and-b",
+      "https://keyflowfeeds.co.uk/products/keyflow-key-plus-s-and-p",
+      "https://keyflowfeeds.co.uk/products/keyflow-blacktype-power"
+    ],
+    expectedRefreshDays: 30,
+    termsNotes: "Robots fetch timed out in this environment; connector performs robots check and uses fallback product URLs for live smoke."
   },
   {
     id: "st-hippolyt-de",
@@ -246,10 +340,7 @@ export const onboardedManufacturerBacklogConfigs: ManufacturerSourceConfig[] = [
   cfg("poseidon-au", "Poseidon Animal Health", "AU", "https://poseidonanimalhealth.com.au", ["AU"], "AUD", "administrator_assisted", ["supplement", "digestive_supplement", "vitamin_mineral_supplement"].map(categoryAlias), ["https://poseidonanimalhealth.com.au/collections/equine"], ["poseidonanimalhealth\\.com\\.au/.+"]),
   cfg("cen-au", "CEN Nutrition", "AU", "https://cennutrition.com.au", ["AU"], "AUD", "administrator_assisted", ["feed", "supplement", "oil", "omega_product"].map(categoryAlias), ["https://cennutrition.com.au/collections/equine"], ["cennutrition\\.com\\.au/.+"]),
 
-  cfg("saracen-gb", "Saracen Horse Feeds", "GB", "https://www.saracenhorsefeeds.com", ["GB", "IE"], "GBP", "administrator_assisted", ["feed", "performance_feed", "stud_feed", "balancer"], ["https://www.saracenhorsefeeds.com/products"], ["saracenhorsefeeds\\.com/.+"]),
-  cfg("baileys-gb", "Baileys Horse Feeds", "GB", "https://www.baileyshorsefeeds.co.uk", ["GB", "IE"], "GBP", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "balancer"], ["https://www.baileyshorsefeeds.co.uk/products"], ["baileyshorsefeeds\\.co\\.uk/.+"]),
   cfg("spillers-gb", "Spillers", "GB", "https://www.spillers-feeds.com", ["GB", "IE"], "GBP", "administrator_assisted", ["feed", "balancer", "senior_feed", "youngstock_feed"], ["https://www.spillers-feeds.com/products"], ["spillers-feeds\\.com/.+"]),
-  cfg("allen-page-gb", "Allen & Page", "GB", "https://www.allenandpage.com", ["GB", "IE"], "GBP", "administrator_assisted", ["feed", "performance_feed", "senior_feed", "balancer"], ["https://www.allenandpage.com/horse-feed"], ["allenandpage\\.com/.+"]),
   cfg("topspec-gb", "TopSpec", "GB", "https://www.topspec.com", ["GB", "IE"], "GBP", "administrator_assisted", ["balancer", "supplement", "feed"].map(categoryAlias), ["https://www.topspec.com/products"], ["topspec\\.com/.+"]),
   cfg("blue-chip-gb", "Blue Chip Feed", "GB", "https://www.bluechipfeed.com", ["GB", "IE"], "GBP", "administrator_assisted", ["balancer", "feed", "supplement"].map(categoryAlias), ["https://www.bluechipfeed.com/products"], ["bluechipfeed\\.com/.+"]),
   cfg("equine-america-gb", "Equine America UK", "GB", "https://www.equine-america.co.uk", ["GB", "IE"], "GBP", "administrator_assisted", ["supplement", "joint_supplement", "digestive_supplement", "electrolyte"].map(categoryAlias), ["https://www.equine-america.co.uk/products"], ["equine-america\\.co\\.uk/.+"]),
@@ -382,5 +473,6 @@ function cfg(
 
 function categoryAlias(category: string): ManufacturerSourceConfig["productCategories"][number] {
   if (category === "supplement") return "vitamin_mineral_supplement";
+  if (category === "mash") return "feed";
   return category as ManufacturerSourceConfig["productCategories"][number];
 }

@@ -29,7 +29,7 @@ export interface ParseProductPageOptions {
 }
 
 const NUTRIENT_LINE =
-  /([A-Za-zÀ-ÿ0-9 &().+\-/]+?)\s*(?:=|:|\s{2,}|\|)\s*([<>]?\s*\d[\d,.]*(?:\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|kcal\/kg|iu\/kg|i\.u\/kg|iu\/lb\.?|mg\/lb\.?|MJ\/kg|Mcal\/lb|MJ|kcal|g|mg|mcg|ug|iu))?)/gi;
+  /([A-Za-zÀ-ÿ0-9 &().+\-/]+?)\s*(?:=|:|-|–|\s{2,}|\|)\s*([<>]?\s*\d[\d,.]*(?:\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|kcal\/kg|iu\/kg|i\.u\/kg|iu\/lb\.?|mg\/lb\.?|MJ\/kg|Mcal\/lb|MJ|kcal|g|mg|mcg|ug|iu))?)/gi;
 
 export function parseProductPage(options: ParseProductPageOptions): ParsedProductPage {
   const text = htmlToText(options.htmlOrText);
@@ -135,23 +135,14 @@ export function parseNutrientsFromText(textOrHtml: string, sourceUrl: string): N
     if (!looksLikeNutrient(label)) continue;
     addNutrient(nutrients, unknownNutrientLabels, label, rawValue, sourceUrl, match[0]);
   }
-  const lines = text.split(/\n/).map((line) => line.trim()).filter(Boolean);
+  const lines = text.split(/\n/).map((line) => stripNutrientSectionPrefix(line.trim().replace(/^[-•]\s*/, ""))).filter(Boolean);
   for (const line of lines) {
     const clean = line.trim();
+    for (const segment of clean.split(/\s*,\s*/).map((part) => stripNutrientSectionPrefix(part.trim())).filter(Boolean)) {
+      if (segment !== clean) parseNutrientLineSegment(nutrients, unknownNutrientLabels, segment, sourceUrl);
+    }
     if (!looksLikeNutrient(clean)) continue;
-    const spaced = clean.match(/^(.{3,80}?)\s+([<>]?\s*\d[\d,.]*(?:\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|kcal\/kg|iu\/kg|i\.u\/kg|iu\/lb\.?|mg\/lb\.?|MJ\/kg|Mcal\/lb|MJ|kcal|g|mg|mcg|ug|iu))?)$/i);
-    if (spaced) {
-      addNutrient(nutrients, unknownNutrientLabels, cleanLabel(spaced[1]), spaced[2], sourceUrl, clean);
-      continue;
-    }
-    const compact = clean.match(/^([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ /().+\-]*?(?:B12|B6|B5|B3|B2|B1|D3|A|D|E|K)?)([<>]?\d[\d,.]*(?:\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|kcal\/kg|iu\/kg|i\.u\/kg|MJ\/kg|Mcal\/lb|MJ|kcal|g|mg|mcg|ug|iu))?)$/i);
-    if (compact && looksLikeNutrient(compact[1])) {
-      addNutrient(nutrients, unknownNutrientLabels, cleanLabel(compact[1]), compact[2], sourceUrl, clean);
-      continue;
-    }
-    for (const valueFirst of clean.matchAll(/([<>]?\d[\d,.]*\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|kcal\/kg|iu\/kg|i\.u\/kg|MJ\/kg|Mcal\/lb|MJ|kcal|g|mg|mcg|ug|iu))\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ /().+\-]{2,40})/gi)) {
-      if (looksLikeNutrient(valueFirst[2])) addNutrient(nutrients, unknownNutrientLabels, cleanLabel(valueFirst[2]), valueFirst[1], sourceUrl, clean);
-    }
+    if (parseNutrientLineSegment(nutrients, unknownNutrientLabels, clean, sourceUrl)) continue;
   }
   for (let index = 0; index < lines.length - 1; index += 1) {
     const label = cleanLabel(lines[index]);
@@ -171,6 +162,24 @@ export function parseNutrientsFromText(textOrHtml: string, sourceUrl: string): N
     };
   }
   return nutrients;
+}
+
+function parseNutrientLineSegment(nutrients: NutrientMap, unknownNutrientLabels: string[], clean: string, sourceUrl: string): boolean {
+  if (!looksLikeNutrient(clean)) return false;
+    const spaced = clean.match(/^(.{3,80}?)\s+([<>]?\s*\d[\d,.]*(?:\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|kcal\/kg|iu\/kg|i\.u\/kg|iu\/lb\.?|mg\/lb\.?|MJ\/kg|Mcal\/lb|MJ|kcal|g|mg|mcg|ug|iu))?)$/i);
+    if (spaced) {
+      addNutrient(nutrients, unknownNutrientLabels, cleanLabel(spaced[1]), spaced[2], sourceUrl, clean);
+      return true;
+    }
+    const compact = clean.match(/^([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ /().+\-]*?(?:B12|B6|B5|B3|B2|B1|D3|A|D|E|K)?)([<>]?\d[\d,.]*(?:\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|kcal\/kg|iu\/kg|i\.u\/kg|MJ\/kg|Mcal\/lb|MJ|kcal|g|mg|mcg|ug|iu))?)$/i);
+    if (compact && looksLikeNutrient(compact[1])) {
+      addNutrient(nutrients, unknownNutrientLabels, cleanLabel(compact[1]), compact[2], sourceUrl, clean);
+      return true;
+    }
+    for (const valueFirst of clean.matchAll(/([<>]?\d[\d,.]*\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|kcal\/kg|iu\/kg|i\.u\/kg|MJ\/kg|Mcal\/lb|MJ|kcal|g|mg|mcg|ug|iu))\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ /().+\-]{2,40})/gi)) {
+      if (looksLikeNutrient(valueFirst[2])) addNutrient(nutrients, unknownNutrientLabels, cleanLabel(valueFirst[2]), valueFirst[1], sourceUrl, clean);
+    }
+  return false;
 }
 
 function addNutrient(nutrients: NutrientMap, unknownNutrientLabels: string[], label: string, rawValue: string, sourceUrl: string, sourceText: string): void {
@@ -255,7 +264,7 @@ function packageSortWeight(option: PackagingOption): number {
 
 function parseWarningsFromText(text: string): string[] {
   const warnings: string[] = [];
-  for (const pattern of [/fresh drinking water[^.]+/i, /introduce[^.]+gradually[^.]+/i, /do not exceed[^.]+/i, /prohibited substance[^.]+/i, /unsuitable[^.]+/i]) {
+  for (const pattern of [/fresh drinking water[^.]+/i, /introduce[^.]+gradually[^.]+/i, /do not exceed[^.]+/i, /do not feed dry[^.]+/i, /must be soaked[^.]+/i, /prohibited substance[^.]+/i, /unsuitable[^.]+/i]) {
     const match = text.match(pattern);
     if (match) warnings.push(match[0].trim());
   }
@@ -292,6 +301,12 @@ function confidenceBreakdown(nutrients: NutrientMap, feedingRules: FeedingRule[]
 
 function cleanLabel(label: string): string {
   return label.replace(/[-•|]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function stripNutrientSectionPrefix(value: string): string {
+  return value
+    .replace(/^(analytical constituents|nutritional information|nutrient specification|major nutrients|minerals|vitamins|macro minerals|trace minerals)\s+/i, "")
+    .trim();
 }
 
 function looksLikeNutrient(label: string): boolean {

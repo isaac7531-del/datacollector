@@ -5,6 +5,7 @@ import type { FeedingProgram, HorseProfile } from "../domain/types";
 import { manufacturerTargetReconnaissance } from "../connectors/manufacturerSourceConfigs";
 import { parseForageLaboratoryImport } from "../forage/laboratoryImports";
 import { buildAustralianAcceptanceReport } from "../operations/australiaAcceptanceReport";
+import { buildUkIrelandAcceptanceReport, UK_IRELAND_ACCEPTANCE_MANUFACTURERS } from "../operations/ukIrelandAcceptanceReport";
 import { OperationalWorkerRunner, type OperationalWorkerName } from "../workers/operationalWorkers";
 import { createOperationalEngine, createOperationalRuntime, createSeededEngine } from "./engineFactory";
 
@@ -140,6 +141,21 @@ program
       }
     }
     print(await buildAustralianAcceptanceReport(engine, { postgreSqlVerified: options.postgresVerified }));
+  });
+
+program
+  .command("uk-ireland:acceptance-report")
+  .description("Summarise UK/Ireland manufacturer production-acceptance evidence")
+  .option("--collect-live", "Run live in-memory collection for UK/Ireland manufacturers before reporting")
+  .option("--postgres-verified", "Mark PostgreSQL verification as passed after running test:postgres:live-uk")
+  .action(async (options: { collectLive?: boolean; postgresVerified?: boolean }) => {
+    const engine = await createOperationalEngine();
+    if (options.collectLive) {
+      for (const manufacturer of UK_IRELAND_ACCEPTANCE_MANUFACTURERS) {
+        await engine.runConnector(manufacturer);
+      }
+    }
+    print(await buildUkIrelandAcceptanceReport(engine, { postgreSqlVerified: options.postgresVerified }));
   });
 
 program
