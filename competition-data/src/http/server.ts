@@ -454,12 +454,14 @@ async function readRepositoryData(repository: CompetitionDataRepository, pathPar
     const entityType = pathParts[0] === "competitions" ? "competition" : pathParts[0] === "events" ? "event" : pathParts[0]?.replace(/s$/, "");
     const records = await postgres.listCanonicalRecords(entityType);
     if (pathParts[0] === "competitions" && pathParts[1] && pathParts[2] === "classes") {
+        const identifiers = identifiersForCompetition(records, pathParts[1]);
       const classes = await postgres.listCanonicalRecords("event");
-      return { items: classes.filter((item) => JSON.stringify(item).includes(pathParts[1] ?? "")) };
+        return { items: classes.filter((item) => identifiers.some((identifier) => JSON.stringify(item).includes(identifier))) };
     }
     if (pathParts[0] === "competitions" && pathParts[1] && pathParts[2] === "results") {
+        const identifiers = identifiersForCompetition(records, pathParts[1]);
       const results = await postgres.listCanonicalRecords("result");
-      return { items: results.filter((item) => JSON.stringify(item).includes(pathParts[1] ?? "")) };
+        return { items: results.filter((item) => identifiers.some((identifier) => JSON.stringify(item).includes(identifier))) };
     }
     if (pathParts[1] && pathParts[2] === "results") {
       return { items: records.filter((result) => JSON.stringify(result).includes(pathParts[1] ?? "")) };
@@ -480,6 +482,17 @@ async function readRepositoryData(repository: CompetitionDataRepository, pathPar
     return collection.find((item) => (item as { id?: string }).id === pathParts[1]) ?? { error: "not_found" };
   }
   return { items: collection };
+}
+
+function identifiersForCompetition(competitions: unknown[], requestedId: string): string[] {
+  const competition = competitions.find((item) => (item as { id?: string }).id === requestedId);
+  if (!competition) return [requestedId];
+  const ids = [requestedId];
+  const externalIds = (competition as { externalIds?: Array<{ sourceId?: string }> }).externalIds ?? [];
+  for (const externalId of externalIds) {
+    if (externalId.sourceId) ids.push(externalId.sourceId);
+  }
+  return ids;
 }
 
 async function renderMetrics(repository: CompetitionDataRepository): Promise<string> {

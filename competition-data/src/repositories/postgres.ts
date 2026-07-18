@@ -420,7 +420,7 @@ export class PostgresCompetitionDataRepository implements CompetitionDataReposit
       ]
     );
     if (entityType === "result") {
-      const fingerprint = createHash("sha256").update(JSON.stringify(entity)).digest("hex");
+      const fingerprint = createHash("sha256").update(JSON.stringify(resultVersionStableFields(entity))).digest("hex");
       await client.query(
         `INSERT INTO competition_data_result_versions (id, payload)
          VALUES ($1, $2)
@@ -494,6 +494,26 @@ function randomId(prefix: string): string {
 function readFirstSourceUrl(entity: unknown): string | undefined {
   const first = readExternalIds(entity)[0] as { sourceUrl?: unknown } | undefined;
   return typeof first?.sourceUrl === "string" ? first.sourceUrl : undefined;
+}
+
+function resultVersionStableFields(entity: unknown): unknown {
+  const record = entity as Record<string, unknown>;
+  const metadata = record.metadata as Record<string, unknown> | undefined;
+  return {
+    externalIds: readExternalIds(entity),
+    horseName: record.horseName,
+    riderName: record.riderName,
+    placing: record.placing,
+    score: record.score,
+    faults: record.faults,
+    time: record.time,
+    status: record.status,
+    startNumber: record.startNumber,
+    resultDate: record.resultDate,
+    eventing: metadata?.eventing,
+    originalStatus: metadata?.originalStatus,
+    canonicalStatus: metadata?.canonicalStatus
+  };
 }
 
 function mergeEntity<TEntity>(match: TEntity, incoming: TEntity): TEntity {

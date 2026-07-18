@@ -57,27 +57,33 @@ export function createBritishEventingConnector(options: BritishEventingConnector
           ? await discoverEventUrls(options.discoveryUrls, options.userAgent, Number(context.metadata?.maxEvents ?? 25))
           : options.eventUrls;
       const items: DiscoveryItem[] = [];
+      const failures: string[] = [];
       for (const url of urls) {
-        const html = await fetchText(url, options.userAgent);
-        if (/captcha-delivery|cf-chl|g-recaptcha|please enable js and disable any ad blocker/i.test(html)) {
-          throw new Error(`British Eventing returned a challenge for ${url}`);
+        try {
+          const html = await fetchText(url, options.userAgent);
+          if (/captcha-delivery|cf-chl|g-recaptcha|please enable js and disable any ad blocker/i.test(html)) {
+            throw new Error(`British Eventing returned a challenge for ${url}`);
+          }
+          const event = parseBritishEventingEventPage(html, url);
+          items.push({
+            id: event.id,
+            connectorId,
+            source: britishEventingSource,
+            url,
+            label: event.name,
+            countryCode: "GB",
+            discipline: "eventing",
+            earliestDate: event.startDate,
+            latestDate: event.endDate,
+            metadata: { event }
+          });
+        } catch (error) {
+          failures.push(`${url}: ${error instanceof Error ? error.message : "unknown error"}`);
         }
-        const event = parseBritishEventingEventPage(html, url);
-        items.push({
-          id: event.id,
-          connectorId,
-          source: britishEventingSource,
-          url,
-          label: event.name,
-          countryCode: "GB",
-          discipline: "eventing",
-          earliestDate: event.startDate,
-          latestDate: event.endDate,
-          metadata: { event }
-        });
       }
       descriptor.lastSuccessfulDiscovery = new Date().toISOString();
-      descriptor.sourceHealthStatus = "healthy";
+      descriptor.sourceHealthStatus = failures.length ? "degraded" : "healthy";
+      descriptor.accessLimitation = failures.length ? failures.slice(0, 5).join("; ") : undefined;
       return items;
     },
     async collect(item: DiscoveryItem, _context: CollectionContext): Promise<RawCompetitionPayload[]> {

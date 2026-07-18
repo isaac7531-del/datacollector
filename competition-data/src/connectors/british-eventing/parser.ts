@@ -213,6 +213,7 @@ export function normalizeBritishEventing(event: BritishEventingEvent, chunk: Bri
         level: chunk.canonicalLevel,
         metadata: {
           sourceUrl,
+          competitionSourceId: competitionExternalId.sourceId,
           entityId: chunk.entityId,
           definitionId: chunk.definitionId,
           originalClassLabel: chunk.originalClassLabel,

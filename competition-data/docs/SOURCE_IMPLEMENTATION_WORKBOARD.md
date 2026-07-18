@@ -21,9 +21,9 @@ Status values are intentionally conservative. A smoke test does not imply produc
 | british-eventing | Phase results | supported | Live smoke table chunks |  | More events/levels |
 | british-eventing | Final results | supported | Live smoke: 2 latest events, 6 graphs, 0 issues | Needs 25-event acceptance | Acceptance suite |
 | british-eventing | Historical backfill | partially_supported | Historical links | No broad crawler | Controlled backfill |
-| british-eventing | Persistent import | partially_supported | `source:persist-smoke --limit 2` persisted 2 events to PostgreSQL | Full 25-event corpus not persisted | Persist acceptance corpus |
-| british-eventing | API verification | unsupported |  | Canonical API routes not verified against corpus | Add API acceptance script |
-| british-eventing | Acceptance | partially_supported | `source:acceptance` returns acceptance_testing with missing evidence | 25-event corpus, corrections, restart report missing | Expand coverage |
+| british-eventing | Persistent import | partially_supported | `source:acceptance --limit 5` persisted 5 events to PostgreSQL idempotently | Full 25-event corpus hung before completion | Add checkpointed per-event acceptance runner |
+| british-eventing | API verification | partially_supported | Aggregate API and competition child routes verified in 5-event run | horse/rider/combination result routes not fully verified | Add route-specific API acceptance checks |
+| british-eventing | Acceptance | partially_supported | 5-event persistence/restart/idempotency proven | 25-event corpus, second year, checkpoint recovery, live correction evidence missing | Checkpoint acceptance runner and rerun corpus |
 | fei | Registration | supported | Registry + docs |  | Authorised connector |
 | fei | Discovery | requires_browser_assistance | DataDome on robots | Challenge on server | Browser queue / authorised WS |
 | eventing-ireland | Registration | supported | Registry + scaffold |  | Inspect live app requests |
