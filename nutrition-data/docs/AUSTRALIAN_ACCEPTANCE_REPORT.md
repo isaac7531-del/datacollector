@@ -14,7 +14,14 @@ Generated during Phase 3A implementation.
 
 ## Production-ready status
 
-No Australian manufacturer is marked `production_ready` yet because Phase 3A requires PostgreSQL-backed persistence. The live in-memory acceptance report currently returns `productionReadyCount: 0` even when parser coverage passes because `postgreSqlVerification` remains `migration_only`.
+After `npm run test:postgres:live-au` and `npm run australia:acceptance-report -- --collect-live --postgres-verified`, four Australian manufacturers meet production-readiness gates in this repository:
+
+- Mitavite
+- Hygain
+- Pryde's EasiFeed
+- Barastoc
+
+CopRice remains in acceptance testing because product count and ingredient coverage are below threshold.
 
 ## Commands run
 
@@ -26,6 +33,8 @@ No Australian manufacturer is marked `production_ready` yet because Phase 3A req
 - `npm run manufacturer:collect -- --manufacturer coprice-au`
 - `npm run manufacturer:collect -- --manufacturer barastoc-au`
 - `npm run australia:acceptance-report -- --collect-live`
+- `npm run test:postgres:live-au`
+- `npm run australia:acceptance-report -- --collect-live --postgres-verified`
 
 ## Next tasks
 

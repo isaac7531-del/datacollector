@@ -142,6 +142,38 @@ export class NutritionDataEngine {
     };
   }
 
+  async manufacturerHealth(manufacturerId: string) {
+    const [connectorHealth, status, runs, issues] = await Promise.all([
+      this.connectorHealth(manufacturerId),
+      this.manufacturerStatus(manufacturerId),
+      this.operationalRuns({ worker: "products" }),
+      this.operationalIssues({ unresolvedOnly: true })
+    ]);
+    const latestRun = runs.find((run) => JSON.stringify(run.summary ?? {}).includes(manufacturerId)) ?? runs[0];
+    return {
+      connectorId: manufacturerId,
+      status: connectorHealth.status,
+      lastCollection: latestRun?.finishedAt ?? latestRun?.startedAt ?? null,
+      lastPersistence: status.productsCollected ? "available in repository" : null,
+      lastSuccess: latestRun?.status === "succeeded" ? latestRun.finishedAt ?? latestRun.startedAt : null,
+      lastFailure: runs.find((run) => run.status === "failed")?.finishedAt ?? null,
+      productsCollected: status.productsCollected,
+      warnings: issues.filter((issue) => issue.targetId?.includes(manufacturerId) || issue.message.includes(manufacturerId)).map((issue) => issue.message),
+      parserConfidence: {
+        nutrients: status.nutrientCoverage,
+        ingredients: status.ingredientCoverage,
+        feedingDirections: status.feedingDirectionCoverage
+      },
+      acceptanceProgress: {
+        productionReady: status.productionReady,
+        blockers: status.blockers,
+        nextTasks: status.nextTasks
+      },
+      nextOperatorAction: status.nextTasks[0] ?? "No action required.",
+      connectorHealth
+    };
+  }
+
   async manufacturerWorkboard() {
     return new ManufacturerAssessmentService(this.options.repository, onboardedManufacturerSourceConfigs, this.listConnectors()).workboard();
   }

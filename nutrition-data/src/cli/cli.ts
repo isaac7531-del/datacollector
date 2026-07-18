@@ -34,8 +34,8 @@ program
   .argument("[manufacturer]", "manufacturer connector id")
   .action(async (manufacturer?: string) => {
     const engine = await createOperationalEngine();
-    if (manufacturer) return print(await engine.connectorHealth(manufacturer));
-    print(await Promise.all(engine.listConnectors().map((connector) => engine.connectorHealth(connector.id))));
+    if (manufacturer) return print(await engine.manufacturerHealth(manufacturer));
+    print(await Promise.all(engine.listConnectors().map((connector) => engine.manufacturerHealth(connector.id))));
   });
 
 program
@@ -131,14 +131,15 @@ program
   .command("australia:acceptance-report")
   .description("Summarise Australian manufacturer production-acceptance evidence")
   .option("--collect-live", "Run live in-memory collection for Australian manufacturers before reporting")
-  .action(async (options: { collectLive?: boolean }) => {
+  .option("--postgres-verified", "Mark PostgreSQL verification as passed after running test:postgres:live-au")
+  .action(async (options: { collectLive?: boolean; postgresVerified?: boolean }) => {
     const engine = await createOperationalEngine();
     if (options.collectLive) {
       for (const manufacturer of ["mitavite-au", "hygain-au", "prydes-au", "barastoc-au", "coprice-au"]) {
         await engine.runConnector(manufacturer);
       }
     }
-    print(await buildAustralianAcceptanceReport(engine));
+    print(await buildAustralianAcceptanceReport(engine, { postgreSqlVerified: options.postgresVerified }));
   });
 
 program

@@ -24,7 +24,11 @@ async function route(engine: NutritionDataEngine, request: IncomingMessage, resp
     return json(response, 200, await engine.searchProducts({
       text: url.searchParams.get("q") ?? undefined,
       country: url.searchParams.get("country") ?? undefined,
-      includeImported: url.searchParams.get("includeImported") === "true"
+      includeImported: url.searchParams.get("includeImported") === "true",
+      manufacturerId: url.searchParams.get("manufacturerId") ?? undefined,
+      updatedAfter: url.searchParams.get("updatedAfter") ?? undefined,
+      limit: numberParam(url, "limit"),
+      offset: numberParam(url, "offset")
     }));
   }
   if (request.method === "GET" && url.pathname === "/manufacturers") return json(response, 200, await engine.listManufacturers());
@@ -38,7 +42,7 @@ async function route(engine: NutritionDataEngine, request: IncomingMessage, resp
   }
   if (request.method === "GET" && url.pathname.startsWith("/manufacturers/") && url.pathname.endsWith("/health")) {
     const id = url.pathname.split("/")[2];
-    return json(response, 200, await engine.connectorHealth(id));
+    return json(response, 200, await engine.manufacturerHealth(id));
   }
   if (request.method === "GET" && url.pathname.match(/^\/manufacturers\/[^/]+\/products$/)) {
     const id = url.pathname.split("/")[2];
@@ -129,4 +133,11 @@ async function body(request: IncomingMessage): Promise<any> {
 function json(response: ServerResponse, status: number, value: unknown): void {
   response.writeHead(status, { "content-type": "application/json" });
   response.end(JSON.stringify(value, null, 2));
+}
+
+function numberParam(url: URL, name: string): number | undefined {
+  const value = url.searchParams.get(name);
+  if (!value) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }

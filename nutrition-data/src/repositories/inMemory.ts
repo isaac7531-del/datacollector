@@ -70,8 +70,9 @@ export class InMemoryNutritionDataRepository implements NutritionDataRepository 
         if (!(query.includeImported && product.availability.importAvailable)) return false;
       }
       if (query.region && product.availability.regions?.length && !product.availability.regions.includes(query.region)) return false;
+      if (query.updatedAfter && product.lastUpdatedAt <= query.updatedAfter) return false;
       return true;
-    });
+    }).slice(query.offset ?? 0, query.limit ? (query.offset ?? 0) + query.limit : undefined);
   }
 
   async markProductDiscontinued(productId: string, version: VersionRecord): Promise<void> {

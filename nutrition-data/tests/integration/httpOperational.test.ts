@@ -37,6 +37,12 @@ describe("operational HTTP API", () => {
     expect(await getJson(`/products/${productId}/nutrients`)).toHaveProperty("crude_protein");
     expect(await getJson("/forage-labs")).toEqual(expect.arrayContaining([expect.objectContaining({ id: "equi-analytical" })]));
   });
+
+  it("supports mobile-friendly product pagination and incremental sync on the shared API", async () => {
+    const products = await getJson("/products?country=AU&limit=1&offset=0&updatedAfter=2025-01-01T00:00:00.000Z");
+    expect(Array.isArray(products)).toBe(true);
+    expect(products).toHaveLength(1);
+  });
 });
 
 async function getJson(path: string): Promise<any> {

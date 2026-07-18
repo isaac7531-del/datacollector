@@ -15,7 +15,7 @@ export interface AustralianManufacturerAcceptanceRow {
   remainingBlockers: string[];
 }
 
-export async function buildAustralianAcceptanceReport(engine: NutritionDataEngine): Promise<{
+export async function buildAustralianAcceptanceReport(engine: NutritionDataEngine, options: { postgreSqlVerified?: boolean } = {}): Promise<{
   generatedAt: string;
   manufacturers: AustralianManufacturerAcceptanceRow[];
   productionReadyCount: number;
@@ -27,9 +27,10 @@ export async function buildAustralianAcceptanceReport(engine: NutritionDataEngin
     const discovered = await engine.discover({}, [manufacturerId]).catch(() => []);
     const products = await engine.listProducts({ manufacturerId, includeDiscontinued: true });
     const versions = await Promise.all(products.map((product) => engine.productVersions(product.id)));
+    const postgreSqlVerification = options.postgreSqlVerified ? "passed" : "migration_only";
     const remainingBlockers = [
       ...status.blockers,
-      "PostgreSQL-backed persistence not proven in this runtime."
+      ...(options.postgreSqlVerified ? [] : ["PostgreSQL-backed persistence not proven in this runtime."])
     ];
     manufacturers.push({
       manufacturerId,
@@ -40,7 +41,7 @@ export async function buildAustralianAcceptanceReport(engine: NutritionDataEngin
       feedingDirectionCoverage: round(status.feedingDirectionCoverage),
       parserConfidence: parserConfidence(status.nutrientCoverage, status.ingredientCoverage, status.feedingDirectionCoverage),
       formulationVersions: versions.reduce((sum, productVersions) => sum + productVersions.length, 0),
-      postgreSqlVerification: "migration_only",
+      postgreSqlVerification,
       remainingBlockers
     });
   }
@@ -48,7 +49,9 @@ export async function buildAustralianAcceptanceReport(engine: NutritionDataEngin
     generatedAt: new Date().toISOString(),
     manufacturers,
     productionReadyCount: manufacturers.filter((row) => row.remainingBlockers.length === 0 && row.postgreSqlVerification === "passed").length,
-    note: "PostgreSQL verification is migration-only until a persistent repository adapter is supplied by the integration environment."
+    note: options.postgreSqlVerified
+      ? "PostgreSQL verification was supplied by the live PostgreSQL acceptance command."
+      : "PostgreSQL verification is migration-only until a persistent repository adapter is supplied by the integration environment."
   };
 }
 

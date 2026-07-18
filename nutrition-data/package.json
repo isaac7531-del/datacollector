@@ -60,10 +60,11 @@
     "worker:prices": "tsx src/cli/cli.ts worker:prices",
     "worker:recalculate": "tsx src/cli/cli.ts worker:recalculate",
     "worker:outbox": "tsx src/cli/cli.ts worker:outbox",
-    "test:postgres": "vitest run tests/integration/postgresPersistence.test.ts",
+    "test:postgres": "vitest run --config vitest.postgres.config.ts",
     "test:consumer": "tsx tests/consumer/runConsumerIntegration.ts",
     "demo": "tsx src/demo/runDemo.ts",
-    "smoke:live": "NUTRITION_LIVE_SMOKE=1 vitest run tests/live",
+    "smoke:live": "NUTRITION_LIVE_SMOKE=1 vitest run --config vitest.live.config.ts tests/live/liveSmoke.test.ts",
+    "test:postgres:live-au": "NUTRITION_LIVE_POSTGRES=1 vitest run --config vitest.live.config.ts tests/live/postgresAustralianLiveAcceptance.test.ts",
     "migrate": "node scripts/print-migration-instructions.js",
     "export:zip": "node scripts/create-export.mjs"
   },
@@ -80,10 +81,13 @@
     "commander": "^15.0.0",
     "fast-xml-parser": "^5.10.1",
     "pdf-parse": "^2.4.5",
+    "pg": "^8.22.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "latest",
+    "@types/pg": "^8.20.0",
+    "embedded-postgres": "^18.4.0-beta.17",
     "tsx": "^4.23.1",
     "typescript": "latest",
     "vitest": "latest"

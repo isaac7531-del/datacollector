@@ -27,6 +27,9 @@ export interface ProductSearchQuery {
   includeImported?: boolean;
   includeDiscontinued?: boolean;
   manufacturerId?: string;
+  updatedAfter?: string;
+  limit?: number;
+  offset?: number;
 }
 
 export interface NutritionDataRepository {

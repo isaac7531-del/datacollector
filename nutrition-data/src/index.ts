@@ -27,6 +27,7 @@ export * from "./parsing/htmlProductParser";
 export * from "./programs/feedingProgramEngine";
 export * from "./recommendations/recommendationEngine";
 export * from "./repositories/inMemory";
+export * from "./repositories/postgres";
 export * from "./requirements/requirementsEngine";
 export * from "./requirements/standards";
 export * from "./safety/safetyEngine";
