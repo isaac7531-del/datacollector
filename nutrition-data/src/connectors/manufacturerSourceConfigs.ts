@@ -17,6 +17,7 @@ export const launchManufacturerSourceConfigs: ManufacturerSourceConfig[] = [
     catalogueUrls: ["https://mitavite.com/collections/feeds"],
     sitemapUrls: ["https://mitavite.com/sitemap_products_1.xml"],
     productUrlPatterns: ["mitavite\\.com/products/"],
+    excludeProductUrlPatterns: ["mitavite\\.com/products/hygain-"],
     fallbackProductUrls: [
       "https://mitavite.com/products/mitavite-formula-3",
       "https://mitavite.com/products/mitavite-athleteplus",

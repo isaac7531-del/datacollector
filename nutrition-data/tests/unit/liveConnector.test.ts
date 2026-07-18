@@ -20,7 +20,7 @@ describe("live manufacturer connector", () => {
       if (url.endsWith("/robots.txt")) return response("User-agent: *\nDisallow:");
       return response(page, "text/html");
     }) as unknown as typeof fetch;
-    const config = { ...launchManufacturerSourceConfigs[0], catalogueUrls: ["https://example.test/feeds"], sitemapUrls: [], fallbackProductUrls: [] };
+    const config = { ...launchManufacturerSourceConfigs[0], catalogueUrls: ["https://example.test/feeds"], sitemapUrls: [], fallbackProductUrls: [], productUrlPatterns: ["example\\.test/products/"] };
     const connector = createLiveManufacturerConnector({ config, fetchImpl, now: () => new Date("2026-01-01T00:00:00Z") });
     const items = await connector.discoverProducts();
     expect(items[0].url).toBe("https://example.test/products/example-feed");

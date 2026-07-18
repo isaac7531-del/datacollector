@@ -136,6 +136,15 @@ export function parseNutrientsFromText(textOrHtml: string, sourceUrl: string): N
     if (!fact) continue;
     nutrients[fact.canonicalKey] = nutrientFactToValue(fact);
   }
+  for (const line of text.split(/\n/)) {
+    const clean = line.trim();
+    if (!looksLikeNutrient(clean)) continue;
+    const match = clean.match(/^(.{3,80}?)\s+([<>]?\s*\d[\d,.]*(?:\s*(?:%|ppm|g\/kg|mg\/kg|mcg\/kg|ug\/kg|iu\/kg|i\.u\/kg|iu\/lb\.?|mg\/lb\.?|MJ\/kg|Mcal\/lb|MJ|g|mg|mcg|ug|iu))?)$/i);
+    if (!match) continue;
+    const fact = parseNutrientDeclaration(cleanLabel(match[1]), match[2], sourceUrl, clean);
+    if (!fact) continue;
+    nutrients[fact.canonicalKey] = nutrientFactToValue(fact);
+  }
   return nutrients;
 }
 
@@ -188,12 +197,23 @@ function extractTitle(text: string, sourceUrl: string): string {
 
 function parsePackagingFromText(text: string): PackagingOption[] {
   const options = new Map<string, PackagingOption>();
-  for (const match of text.matchAll(/(\d+(?:\.\d+)?)\s*(kg|g|lb|lbs|l|ml)\s*(?:bag|bale|tub|sack|value bag)?/gi)) {
+  for (const match of text.matchAll(/(\d+(?:\.\d+)?)\s*(kg|g|lb|lbs|l|ml)\s*(bag|bale|tub|sack|value bag)?/gi)) {
+    const context = text.slice(match.index ?? 0, (match.index ?? 0) + 40);
+    if (/bodyweight|body weight/i.test(context)) continue;
+    if (!match[3] && match[2].toLowerCase() === "g") continue;
     const unit = match[2].toLowerCase() === "lbs" ? "lb" : (match[2].toLowerCase() as PackagingOption["unit"]);
     const option = { size: Number(match[1]), unit, label: match[0] };
+    if (packageSortWeight(option) > 50) continue;
     options.set(`${option.size}:${option.unit}`, option);
   }
-  return Array.from(options.values());
+  return Array.from(options.values()).sort((a, b) => packageSortWeight(b) - packageSortWeight(a));
+}
+
+function packageSortWeight(option: PackagingOption): number {
+  if (option.unit === "kg" || option.unit === "l") return option.size;
+  if (option.unit === "lb") return option.size * 0.45359237;
+  if (option.unit === "g" || option.unit === "ml") return option.size / 1000;
+  return option.size;
 }
 
 function parseWarningsFromText(text: string): string[] {

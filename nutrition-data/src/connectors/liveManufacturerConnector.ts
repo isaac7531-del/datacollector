@@ -72,7 +72,10 @@ export function createLiveManufacturerConnector(options: LiveManufacturerConnect
       const discovered = new Set(options.config.fallbackProductUrls ?? []);
       for (const url of [...options.config.catalogueUrls, ...(options.config.sitemapUrls ?? [])]) {
         const urls = await discoverUrls(url, options.config.productUrlPatterns, fetcher);
-        for (const productUrl of urls) discovered.add(productUrl);
+        for (const productUrl of urls) {
+          if (options.config.excludeProductUrlPatterns?.some((pattern) => new RegExp(pattern).test(productUrl))) continue;
+          discovered.add(productUrl);
+        }
       }
       telemetry = { ...telemetry, lastSuccessfulDiscovery: now(options).toISOString() };
       return Array.from(discovered).map((url) => ({

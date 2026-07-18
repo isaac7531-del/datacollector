@@ -76,6 +76,7 @@ export interface ManufacturerSourceConfig {
   catalogueUrls: string[];
   sitemapUrls?: string[];
   productUrlPatterns: string[];
+  excludeProductUrlPatterns?: string[];
   fallbackProductUrls?: string[];
   distributorUrls?: string[];
   stockistUrls?: string[];

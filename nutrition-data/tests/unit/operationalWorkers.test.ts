@@ -9,7 +9,9 @@ describe("operational workers", () => {
     const runner = new OperationalWorkerRunner(engine, repository);
     const result = await runner.run("discovery");
     expect(result.summary.discovered).toBe(0);
-    expect(await repository.listOperationalRuns()).toHaveLength(2);
+    const runs = await repository.listOperationalRuns();
+    expect(runs).toHaveLength(1);
+    expect(runs[0].status).toBe("succeeded");
     expect(await repository.getCheckpoint("nutrition-worker:discovery:all")).toBeTruthy();
   });
 });
