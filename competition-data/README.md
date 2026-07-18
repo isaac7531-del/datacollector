@@ -184,8 +184,13 @@ Replit should provide implementations for:
 - User-uploaded official result files.
 - Historical, unofficial, club, Pony Club, correction and private-note workflows.
 
+## Supportable with the right integration or source approval
+
+- Legacy `.xls` import can be added if Replit selects and approves a safe parser with acceptable security/licence posture.
+- Replit-specific auth, tenant isolation and UI workflows are integration targets for the main EquiBets Replit app through the documented adapter contracts.
+- Certified live national federation or event-provider integrations are supported through source-specific connectors once source terms, formats and responsible access are verified.
+
 ## Not supported
 
 - Direct FEI automation where technical protections block server access.
-- CAPTCHA/DataDome bypassing, proxy rotation, browser fingerprint spoofing or stealth scraping.
-- Legacy `.xls` import without a safe parser.
+- CAPTCHA/DataDome bypassing, proxy rotation for blocked access, browser fingerprint spoofing or stealth scraping.

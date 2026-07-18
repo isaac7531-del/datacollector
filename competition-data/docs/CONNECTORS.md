@@ -34,7 +34,7 @@ Supports uploaded or local CSV content, configurable delimiter, encoding, decima
 
 Supports `.xlsx` files using `read-excel-file`, sheet selection, header-row selection, configurable mappings, preview, validation, and the same normalized pipeline as CSV.
 
-Legacy `.xls` is not enabled because the package avoids the vulnerable `xlsx` parser. Add `.xls` only if Replit selects a safe parser.
+Legacy `.xls` is supportable only if Replit selects a safe parser with acceptable security and licence posture. The package intentionally avoids adding vulnerable parser dependencies.
 
 ### Generic JSON Connector
 
@@ -63,7 +63,7 @@ Supports public HTTP/HTTPS CSV, JSON, XML and `.xlsx` files with:
 - clear user agent;
 - SSRF protections.
 
-It does not support authenticated access, CAPTCHA bypass, anti-bot circumvention, proxy rotation or browser automation.
+It does not support authenticated access, CAPTCHA bypass, anti-bot circumvention, proxy rotation for blocked access or browser automation. If a source requires authentication, build an explicit authorised connector instead of using arbitrary URL import.
 
 ### Manual Import Connector
 
@@ -77,7 +77,7 @@ Routes manual submissions through staging, validation, provenance, identity reso
 
 Supports FEI data supplied through public downloads, user-uploaded exports, existing FEI exports, administrator-assisted imports and permitted public file URLs.
 
-Direct FEI page automation is disabled by design where FEI pages block automated server access.
+Direct FEI page automation is disabled by design where FEI pages block automated server access. FEI support remains focused on official/public downloads, exports, permitted public file URLs and administrator-assisted workflows.
 
 ## National results framework
 
@@ -86,4 +86,4 @@ Direct FEI page automation is disabled by design where FEI pages block automated
 - `syntheticNationalCsvConfiguration`
 - `syntheticNationalExcelConfiguration`
 
-These are examples only. They are not live national federation integrations.
+These are examples only. Certified live national federation or event-provider integrations are supported through this framework after source terms, mappings and end-to-end validation are completed.

@@ -64,11 +64,11 @@ Supported:
 - direct public file URLs where accessible and permitted;
 - preservation of FEI IDs/source URLs in imported files.
 
-Unsupported:
+Not supportable:
 
 - DataDome bypassing;
 - CAPTCHA solving;
-- proxy rotation;
+- proxy rotation for blocked access;
 - browser fingerprint spoofing;
 - stealth scraping;
 - direct automation of FEI pages that block server access.
@@ -189,7 +189,12 @@ Public imports must never overwrite private Stable Manager data: notes, health r
 ## Known limitations
 
 - No real public source has been certified live end to end from this checkout.
-- Legacy `.xls` is not enabled.
+- Legacy `.xls` is supportable only after Replit selects and approves a safe parser.
 - Multipart uploads should be connected through Replit's existing upload middleware.
 - PostgreSQL tests require `DATABASE_URL`.
 - Direct blocked-source automation is intentionally unsupported.
+
+## Supportable after Replit integration
+
+- Replit-specific auth, tenant and UI integration through the documented adapter contracts.
+- Certified live national federation and event-provider connectors after source approval, mapping and end-to-end validation.

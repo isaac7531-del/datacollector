@@ -13,7 +13,7 @@ This Cursor Cloud environment does not include Docker or system PostgreSQL binar
 | Component | Implemented | Synthetic fixtures | Persistent PostgreSQL | HTTP API | CLI | Worker | Real public file | Production-ready | Remaining limitation |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---|
 | CSV import | Yes | Yes | Yes | Boundary exists | Yes | Boundary exists | Transformed public-page fixture | Not yet | Needs certified raw public CSV source |
-| Excel import | Yes (`.xlsx`) | Yes | Connector path tested via PostgreSQL pipeline indirectly | Via file/import boundary | Partial | Boundary exists | Pending | Not yet | `.xls` unsupported; needs real spreadsheet validation |
+| Excel import | Yes (`.xlsx`) | Yes | Connector path tested via PostgreSQL pipeline indirectly | Via file/import boundary | Partial | Boundary exists | Pending | Not yet | `.xls` support requires safe parser approval; needs real spreadsheet validation |
 | JSON import | Yes | Yes | Connector path tested synthetically | Via file/import boundary | Partial | Boundary exists | Pending | Not yet | Needs real public structured source validation |
 | XML import | Yes | Yes | Connector path tested synthetically | Via file/import boundary | Partial | Boundary exists | Pending | Not yet | Needs real public XML source validation |
 | Public URL import | Yes | SSRF/allowlist tests | Connector can persist via PostgreSQL | Yes | Yes | Boundary exists | Pending raw URL | Not yet | Needs approved real public file URL |

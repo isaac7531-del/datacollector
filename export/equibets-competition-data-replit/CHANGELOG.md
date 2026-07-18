@@ -75,12 +75,12 @@
 - User-uploaded official result files.
 - Human review for uncertain matches, conflicts and unverified sources.
 
-### Unsupported direct sources
+### Not supportable circumvention workflows
 
 - Direct FEI page automation where automated access is blocked.
 - DataDome bypassing.
 - CAPTCHA solving.
-- Proxy rotation.
+- Proxy rotation for blocked access.
 - Browser fingerprint spoofing.
 - Stealth scraping.
 - Authenticated/private data-source access.
@@ -88,7 +88,7 @@
 ### Known limitations
 
 - No real public FEI or national federation source has been certified live end to end in this repository.
-- Legacy `.xls` import is not enabled because a safe parser has not been selected.
+- Legacy `.xls` import is supportable only after a safe parser has been selected.
 - HTTP file upload currently accepts JSON bodies; Replit should wrap it with existing multipart upload middleware if needed.
 - PostgreSQL integration tests require `DATABASE_URL`.
 - Rollback is implemented at the migration/table level; domain-specific undo import should be connected to Replit's existing Import History/Undo workflows.
